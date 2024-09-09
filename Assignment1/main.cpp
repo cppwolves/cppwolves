@@ -1,5 +1,5 @@
 #include <cstdio>
-#include <fstream>
+#include <cassert>
 #include <iostream>
 #include <string>
 
@@ -35,6 +35,25 @@ int main(int argc, char *argv[]) {
   // identifier
   std::cout << Tokens::BlockCommentStart << "I'm inside the comment block!"
             << Tokens::BlockCommentEnd << Tokens::NewLine;
+
+  std::string token_EOF = Tokens::getTokenName("\0");
+  std::cout << "The string \"\\0\" should be represented with the name "
+               "\"EndOfFile\" token: \"\\0\" --> "
+            << token_EOF << '\n';
+  assert(token_EOF == "EndOfFile");
+
+  std::string null_char =Tokens::getTokenValue(TokenType::EndOfFile); 
+  std::cout << "We can also input a TokenType, such as TokenType::EndOfFile, and get the "
+               "string \"\\0\" back: TokenType::EndOfFile --> "
+            << null_char << '\n';
+  assert(null_char == "\0");
+
+  std::string token_none = Tokens::getTokenName("asdf");
+  std::cout << "If we put in something that is not a token, like the "
+               "string \"asdf\", we should get a string with value \"None\": "
+               "\"asdf\" --> "
+            << token_none << '\n';
+  assert(token_none == "None");
 
   // std::ifstream file(filename);
   // if (!file.is_open()) {

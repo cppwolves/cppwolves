@@ -21,7 +21,7 @@ TokenType Token::getType() const { return type_; }
 std::string Token::toString() const {
   return "Line: " + std::to_string(line_number_) +
          ", Char position: " + std::to_string(char_pos_) + ", Type: (" +
-         std::to_string(int(type_)) + ") " + Tokens::getTokenValue(type_) +
+         std::to_string(int(type_)) + ") " + Tokens::getTokenName(type_) +
          ", Data: \"" + data_ + "\"\n";
 }
 

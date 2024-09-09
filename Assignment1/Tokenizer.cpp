@@ -24,7 +24,7 @@ Token Tokenizer::getNextToken() {
     return token;
   }
   std::string nodata = "";
-  return Token(nodata, 0, 0, TokenType::Null);
+  return Token(nodata, 0, 0, TokenType::None);
 }
 
 void Tokenizer::putBackToken(Token token) { token_stack_.push_back(token); }

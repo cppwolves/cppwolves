@@ -4,7 +4,7 @@
 #include <string>
 
 enum class TokenType {
-  Null = 0,
+  None = 0,
   EndOfFile,
   NewLine,
   Tab,
@@ -45,7 +45,7 @@ enum class TokenType {
 };
 
 namespace Tokens {
-const std::string Null = "Null";
+const std::string None = "None";
 const std::string EndOfFile = "\0";
 const std::string NewLine = "\n";
 const std::string Tab = "\t";
@@ -83,7 +83,10 @@ const std::string BlockCommentEnd = "*/";
 } // namespace Tokens
 
 namespace Tokens {
-const std::string getTokenValue(const TokenType &token);
+const std::string getTokenName(const TokenType &token);
+const std::string getTokenName(const std::string &token);
+TokenType getTokenType(const std::string &value);
+std::string getTokenValue(const TokenType &token);
 } // namespace Tokens
 
 #endif // TOKENS_HPP
