@@ -4,6 +4,7 @@
 #include <string>
 
 #include "Tokenizer.hpp"
+#include "Tokens.hpp"
 
 int main(int argc, char *argv[]) {
   std::string filename{};
@@ -16,17 +17,24 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
+  // The tokenizer takes the filename to the input file to be scanned as
+  // the required arguement. The file is opened automatically.
   Tokenizer tokenizer(filename);
-  Token null_token = tokenizer.getNextToken();
-  std::cout << "Null token has type: " << int(null_token.getType())
-            << " and data: " << null_token.getData() << '\n';
 
-  null_token.setData("/*", TokenType::BlockCommentStart);
-  std::cout << "Null token now has type: "
-            << (null_token.getType() == TokenType::BlockCommentStart
-                    ? "BlockCommentStart"
-                    : "Unknown")
-            << " and data: " << null_token.getData() << '\n';
+  // As of now, this function returns a "Null" token
+  Token null_token = tokenizer.getNextToken();
+  std::cout << "Initial token: " + null_token.toString();
+
+  // This is a temporary function for testing. This way the ability
+  // to modify the token can only be handled by Tokenizer
+  tokenizer.setTokenData(null_token, "/*", 100, 5,
+                         TokenType::BlockCommentStart);
+  std::cout << "Updated token: " + null_token.toString();
+
+  // We can easily reference Token constants by using the Tokens:: namespace
+  // identifier
+  std::cout << Tokens::BlockCommentStart << "I'm inside the comment block!"
+            << Tokens::BlockCommentEnd << Tokens::NewLine;
 
   // std::ifstream file(filename);
   // if (!file.is_open()) {

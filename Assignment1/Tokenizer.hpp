@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "Token.hpp"
+#include "Tokens.hpp"
 
 class Token;
 
@@ -15,6 +16,8 @@ public:
   Tokenizer();
   explicit Tokenizer(std::string filename);
 
+  void setTokenData(Token& token, std::string data, uint32_t lineNumber,
+                     uint32_t charPosition, TokenType type);
   Token getNextToken();
   void putBackToken(Token token);
 
