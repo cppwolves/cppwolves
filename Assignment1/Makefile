@@ -1,5 +1,5 @@
 all:
-	g++ -std=c++17 main.cpp -o main
+	mkdir bin; g++ -std=c++17 *.cpp -o bin/main -I *.hpp
 
 clean:
-	rm main *.o
+	rm -r bin
