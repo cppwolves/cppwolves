@@ -108,6 +108,14 @@ int main(int argc, char *argv[]) {
     // char c;
     // while (file.get(c) && c != EOF) {
     //     switch (c) {
+    //         case '"': {
+    //             std::cout << c;
+    //             while (file.get(c) && c != '"') {  // inside string
+    //                 std::cout << c;
+    //             }
+    //             std::cout << c;
+    //             break;  // ADD: check for end of file;
+    //         }
     //         case '/': {
     //             if (file.get(c)) {
     //                 if (c == '/') {  // line comment
@@ -138,6 +146,9 @@ int main(int argc, char *argv[]) {
     //             default:
     //                 std::cout << c;
     //         }
+    //             // case '*':{  //terminated comment that wasn't started
+    //             // ADD: check for '/'
+    //             // }
     //     }
     // }
 }
