@@ -76,13 +76,8 @@ Token Tokenizer::getNextToken() {
 void Tokenizer::putBackToken(Token token) { token_stack_.push_back(token); }
 
 void Tokenizer::putBackChar(char c) {
-  assert(index_ > 0 &&
+  assert(index_ >= 0 &&
          "Cannot put back char -- already at beginning of stream");
-//  fstream_.seekg(index_);
-////  assert(fstream_.good());
-////  char a = (char)fstream_.peek();
-////  std::cout << "";
-//  assert((char)fstream_.peek() == c && "Cannot put back char -- invalid index");
   assert(fstream_.putback(c) && "Putback failed");
 
   if (c == Tokens::NewLine) {
