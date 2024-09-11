@@ -12,48 +12,95 @@ int main(int argc, char *argv[]) {
         filename = argv[1];
     }
 
-    if (filename.size() == 0) {
-        std::cout << "usage: program filepath\n";
-        exit(1);
-    }
-
+  if (filename.size() == 0) {
+    std::cout << "usage: program filepath\n";
+    exit(1);
+  }
+/* THIS IS A BLOCK COMMENT */
+  {
     // The tokenizer takes the filename to the input file to be scanned as
     // the required arguement. The file is opened automatically.
     Tokenizer tokenizer(filename);
 
-    // As of now, this function returns a "Null" token
-    Token null_token = tokenizer.getNextToken();
-    std::cout << "Initial token: " + null_token.toString();
-
-    // This is a temporary function for testing. This way the ability
-    // to modify the token can only be handled by Tokenizer
-    tokenizer.setTokenData(null_token, "/*", 100, 5,
+    /* This is a temporary function for testing. This way the ability
+      to modify the token can only be handled by Tokenizer
+     */
+    Token token = Token("", 0, 0, 0, TokenType::None);
+    tokenizer.setTokenData(token, "/*", 25, 100, 5,
                            TokenType::BlockCommentStart);
-    std::cout << "Updated token: " + null_token.toString();
+    std::cout << "Updated token: " + token.toString();
 
     // We can easily reference Token constants by using the Tokens:: namespace
     // identifier
     std::cout << Tokens::BlockCommentStart << "I'm inside the comment block!"
               << Tokens::BlockCommentEnd << Tokens::NewLine;
 
-    std::string token_EOF = Tokens::getTokenName("\0");
+    std::string token_EOF = Tokens::getTokenName('\0');
     std::cout << "The string \"\\0\" should be represented with the name "
-                 "\"EndOfFile\" token: \"\\0\" --> "
-              << token_EOF << '\n';
+              << "\"EndOfFile\" token: \"\\0\" --> "
+              << token_EOF << "\n";
     assert(token_EOF == "EndOfFile");
 
     std::string null_char = Tokens::getTokenValue(TokenType::EndOfFile);
-    std::cout << "We can also input a TokenType, such as TokenType::EndOfFile, and get the "
-                 "string \"\\0\" back: TokenType::EndOfFile --> "
-              << null_char << '\n';
+    std::cout << "We can also input a TokenType, such as TokenType::EndOfFile, "
+              << "and get the string \"\\0\" back: TokenType::EndOfFile --> "
+              << null_char << "\n\n";
     assert(null_char == "\0");
 
     std::string token_none = Tokens::getTokenName("asdf");
     std::cout << "If we put in something that is not a token, like the "
-                 "string \"asdf\", we should get a string with value \"None\": "
-                 "\"asdf\" --> "
-              << token_none << '\n';
+              << "string \"asdf\", we should get a string with value \"None\": "
+              << "\"asdf\" --> "
+              << token_none << "\n";
     assert(token_none == "None");
+
+    std::cout << "Now, let's read the file and print all of the comments:\n\n" << std::flush;
+
+    do {
+      token = tokenizer.getNextToken();
+      if (token.getType() == TokenType::SingleLineComment || token.getType() == TokenType::BlockComment) {
+        std::cout << token.toString() << std::flush;
+      }
+    } while (token.getType() != TokenType::EndOfFile);
+
+    std::cout << "\nEnd of comments" << '\n' << std::flush;
+  }
+
+  {
+    Tokenizer tokenizer = Tokenizer(filename);
+    std::cout << "Now let's print everything excluding comments:\n\n";
+    char c;
+    bool escaping = false;
+    bool inside_string = false;
+
+    while(c = tokenizer.getNextChar(), c != Tokens::EndOfFile) {
+      bool ignore = false;
+      if (c == Tokens::DoubleQuote) {
+        tokenizer.putBackChar(c);
+        std::cout << tokenizer.getNextToken().getData();
+        continue;
+      }
+      if (!inside_string && c == Tokens::LeftParen) {
+        char t = tokenizer.getNextChar();
+        switch (t) {
+        case Tokens::LeftParen:
+        case Tokens::Asterisk: {
+          tokenizer.putBackChar(t);
+          tokenizer.putBackChar(c);
+          Token token = tokenizer.getNextToken();
+          assert(token.getType() == TokenType::SingleLineComment ||
+                 token.getType() == TokenType::BlockComment);
+          ignore = true;
+        } break;
+        default:
+          tokenizer.putBackChar(t);
+        }
+      }
+      if (!ignore) {
+        std::cout << c;
+      }
+    }
+  }
 
     // ***************************************************
     /* Joel's ignore-comment work:  */

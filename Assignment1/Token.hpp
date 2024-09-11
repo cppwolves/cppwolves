@@ -9,20 +9,25 @@ class Tokenizer;
 
 class Token {
 public:
-  explicit Token(std::string data, uint32_t lineNumber, uint32_t charPosition,
-                 TokenType type);
+  explicit Token(std::string data, uint32_t lineNumber, uint32_t charColumn,
+                 uint32_t charPosition, TokenType type);
+  explicit Token(char data, uint32_t lineNumber, uint32_t charColumn,
+                 uint32_t charPosition, TokenType type);
 
   const std::string &getData() const;
   uint32_t getLineNumber() const;
-  uint32_t getCharPosition() const;
+  uint32_t getCharIndex() const;
+  uint32_t getCharColumn() const;
   TokenType getType() const;
 
   std::string toString() const;
+
 private:
-  void setData(std::string data, uint32_t lineNumber, uint32_t charPosition,
-               TokenType type);
+  void setData(std::string data, uint32_t lineNumber, uint32_t charColumn,
+               uint32_t charPosition, TokenType type);
   void setLineNumber(uint32_t lineNumber);
-  void setCharPosition(uint32_t charPosition);
+  void setCharIndex(uint32_t charIndex);
+  void setCharColumn(uint32_t charColumn);
   void setType(TokenType type);
 
 private:
@@ -30,7 +35,8 @@ private:
 
 private:
   uint32_t line_number_;
-  uint32_t char_pos_;
+  uint32_t char_index_;
+  uint32_t char_col_;
   TokenType type_;
   std::string data_;
 

@@ -40,52 +40,58 @@ enum class TokenType {
   BooleanTrue,
   BooleanFalse,
   SingleLineComment,
+  BlockComment,
   BlockCommentStart,
   BlockCommentEnd,
 };
 
 namespace Tokens {
-const std::string None = "None";
-const std::string EndOfFile = "\0";
-const std::string NewLine = "\n";
-const std::string Tab = "\t";
-const std::string CR = "\r";
-const std::string EscapeCharacter = "\033";
-const std::string LeftParen = "/";
-const std::string RightParen = "\\";
-const std::string LeftBracket = "[";
-const std::string RightBracket = "]";
-const std::string LeftBrace = "{";
-const std::string RightBrace = "}";
-const std::string DoubleQuote = "\"";
-const std::string SingleQuote = "\'";
-const std::string Comma = ",";
-const std::string Plus = "+";
-const std::string Minus = "-";
-const std::string Asterisk = "*";
-const std::string Divide = "/";
-const std::string Modulo = "%";
-const std::string Caret = "^";
-const std::string LessThan = "<";
-const std::string GreaterThan = ">";
-const std::string LessThanEqual = "<=";
-const std::string GreaterThanEqual = ">=";
-const std::string BooleanAnd = "&";
-const std::string BooleanOr = "|";
-const std::string BooleanNot = "^";
-const std::string BooleanEqual = "==";
-const std::string BooleanNotEqual = "!=";
-const std::string BooleanTrue = "TRUE";
-const std::string BooleanFalse = "FALSE";
-const std::string SingleLineComment = "//";
-const std::string BlockCommentStart = "/*";
-const std::string BlockCommentEnd = "*/";
+static const char EndOfFile = '\0';
+static const char NewLine = '\n';
+static const char Tab = '\t';
+static const char CR = '\r';
+static const char EscapeCharacter = '\033';
+static const char LeftParen = '/';
+static const char RightParen = '\\';
+static const char LeftBracket = '[';
+static const char RightBracket = ']';
+static const char LeftBrace = '{';
+static const char RightBrace = '}';
+static const char DoubleQuote = '"';
+static const char SingleQuote = '\'';
+static const char Comma = ',';
+static const char Plus = '+';
+static const char Minus = '-';
+static const char Asterisk = '*';
+static const char Divide = '/';
+static const char Modulo = '%';
+static const char Caret = '^';
+static const char LessThan = '<';
+static const char GreaterThan = '>';
+static const char BooleanNot = '!';
+
+static const std::string None = "None";
+static const std::string LessThanEqual = "<=";
+static const std::string GreaterThanEqual = ">=";
+static const std::string BooleanEqual = "==";
+static const std::string BooleanNotEqual = "!=";
+static const std::string BooleanAnd = "&&";
+static const std::string BooleanOr = "||";
+static const std::string BooleanTrue = "TRUE";
+static const std::string BooleanFalse = "FALSE";
+static const std::string SingleLineCommentStart = "//";
+static const std::string BlockCommentStart = "/*";
+static const std::string BlockCommentEnd = "*/";
 } // namespace Tokens
 
 namespace Tokens {
 const std::string getTokenName(const TokenType &token);
 const std::string getTokenName(const std::string &token);
+const std::string getTokenName(char token);
+
 TokenType getTokenType(const std::string &value);
+TokenType getTokenType(char value);
+
 std::string getTokenValue(const TokenType &token);
 } // namespace Tokens
 
