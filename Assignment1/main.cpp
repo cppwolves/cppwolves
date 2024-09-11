@@ -70,7 +70,6 @@ int main(int argc, char *argv[]) {
     Tokenizer tokenizer = Tokenizer(filename);
     std::cout << "Now let's print everything excluding comments:\n\n";
     char c;
-    bool escaping = false;
     bool inside_string = false;
 
     while(c = tokenizer.getNextChar(), c != Tokens::EndOfFile) {
@@ -80,10 +79,10 @@ int main(int argc, char *argv[]) {
         std::cout << tokenizer.getNextToken().getData();
         continue;
       }
-      if (!inside_string && c == Tokens::LeftParen) {
+      if (!inside_string && c == Tokens::LeftSlash) {
         char t = tokenizer.getNextChar();
         switch (t) {
-        case Tokens::LeftParen:
+        case Tokens::LeftSlash:
         case Tokens::Asterisk: {
           tokenizer.putBackChar(t);
           tokenizer.putBackChar(c);

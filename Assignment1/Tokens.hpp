@@ -13,6 +13,8 @@ enum class TokenType {
   EscapeCharacter,
   Letter,
   HexDigit,
+  LeftSlash,
+  RightSlash,
   LeftParen,
   RightParen,
   LeftBracket,
@@ -51,8 +53,10 @@ static const char NewLine = '\n';
 static const char Tab = '\t';
 static const char CR = '\r';
 static const char EscapeCharacter = '\033';
-static const char LeftParen = '/';
-static const char RightParen = '\\';
+static const char LeftSlash = '/';
+static const char RightSlash = '\\';
+static const char LeftParen = '(';
+static const char RightParen = ')';
 static const char LeftBracket = '[';
 static const char RightBracket = ']';
 static const char LeftBrace = '{';

@@ -31,7 +31,7 @@ Token Tokenizer::getNextToken() {
 
     fstream_.seekg(token.char_index_);
     row_ = token.line_number_;
-    last_row_ = row_ - 1 ;
+    last_row_ = row_ - 1;
     index_ = token.char_index_;
     last_index_ = index_ - 1;
     col_ = token.char_col_;
@@ -42,10 +42,10 @@ Token Tokenizer::getNextToken() {
 
   Token token = getNextCharToken();
   switch (token.type_) {
-  case TokenType::LeftParen: {
+  case TokenType::LeftSlash: {
     char c = getNextChar();
     switch (c) {
-    case Tokens::LeftParen:
+    case Tokens::LeftSlash:
       putBackChar(c);
       parseSingleLineComment(token);
       break;
@@ -82,7 +82,7 @@ void Tokenizer::putBackChar(char c) {
 
   if (c == Tokens::NewLine) {
     row_ = last_row_;
-    last_row_ = row_ -1;
+    last_row_ = row_ - 1;
   }
   col_ = last_col_--;
   index_--;
@@ -100,7 +100,7 @@ char Tokenizer::getNextChar() {
         last_row_ = row_++;
         last_col_ = col_;
         col_ = 0;
-    } else {
+      } else {
         if (row_ == 0) {
           row_ = 1;
         }
@@ -135,13 +135,16 @@ Token Tokenizer::getNextCharToken() {
 }
 
 void Tokenizer::parseSingleLineComment(Token &tokenStart) {
-  assert(tokenStart.type_ == TokenType::LeftParen && (char)fstream_.peek() == Tokens::LeftParen);
+  assert(tokenStart.type_ == TokenType::LeftSlash &&
+         (char)fstream_.peek() == Tokens::LeftSlash);
   char c;
   while (c = getNextChar(), c != Tokens::EndOfFile && c != Tokens::NewLine) {
     tokenStart.data_.push_back(c);
   }
   if (c != Tokens::NewLine) {
-    throwInvalidArgumentException(tokenStart, "Malformed single line comment -- Missing new line character");
+    throwInvalidArgumentException(
+        tokenStart,
+        "Malformed single line comment -- Missing new line character");
   }
   tokenStart.data_.push_back(c);
   tokenStart.type_ = TokenType::SingleLineComment;
@@ -150,41 +153,45 @@ void Tokenizer::parseSingleLineComment(Token &tokenStart) {
 void Tokenizer::parseString(Token &tokenStart) {
   assert(tokenStart.type_ == TokenType::DoubleQuote);
   char c;
-  while (c = getNextChar(), c != Tokens::EndOfFile && c != Tokens::DoubleQuote) {
+  while (c = getNextChar(),
+         c != Tokens::EndOfFile && c != Tokens::DoubleQuote) {
     tokenStart.data_.push_back(c);
-    if (c == Tokens::RightParen && (char)fstream_.peek() == Tokens::DoubleQuote) {
+    if (c == Tokens::RightSlash &&
+        (char)fstream_.peek() == Tokens::DoubleQuote) {
       c = getNextChar();
       tokenStart.data_.push_back(c);
     }
   }
   if (c != Tokens::DoubleQuote) {
-    throwInvalidArgumentException(tokenStart, "Malformed string -- missing closing double quote");
+    throwInvalidArgumentException(
+        tokenStart, "Malformed string -- missing closing double quote");
   }
   tokenStart.data_.push_back(c);
   tokenStart.type_ = TokenType::None;
 }
 
 void Tokenizer::parseBlockComment(Token &tokenStart) {
-  assert(tokenStart.type_ == TokenType::LeftParen && (char)fstream_.peek() == Tokens::Asterisk);
+  assert(tokenStart.type_ == TokenType::LeftSlash &&
+         (char)fstream_.peek() == Tokens::Asterisk);
   char c;
   while (c = getNextChar(), c != Tokens::EndOfFile) {
     tokenStart.data_.push_back(c);
-    if (c == Tokens::Asterisk && (char)fstream_.peek() == Tokens::LeftParen) {
+    if (c == Tokens::Asterisk && (char)fstream_.peek() == Tokens::LeftSlash) {
       c = getNextChar();
       break;
     }
   }
-  if (c != Tokens::LeftParen) {
-    throwInvalidArgumentException(tokenStart, "Malformed block comment -- Missing \"*/\" delimiter");
+  if (c != Tokens::LeftSlash) {
+    throwInvalidArgumentException(
+        tokenStart, "Malformed block comment -- Missing \"*/\" delimiter");
   }
   tokenStart.data_.push_back(c);
   tokenStart.type_ = TokenType::BlockComment;
 }
 
-std::invalid_argument& Tokenizer::throwInvalidArgumentException(Token& token, std::string&& message) {
-  throw std::invalid_argument("(Line " +
-                        std::to_string(token.getLineNumber()) +
-                        ":" + std::to_string(token.getCharColumn()) +
-                        ") "+ message);
+std::invalid_argument &
+Tokenizer::throwInvalidArgumentException(Token &token, std::string &&message) {
+  throw std::invalid_argument("(Line " + std::to_string(token.getLineNumber()) +
+                              ":" + std::to_string(token.getCharColumn()) +
+                              ") " + message);
 }
-
