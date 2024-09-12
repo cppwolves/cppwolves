@@ -64,6 +64,13 @@ Token Tokenizer::getNextToken() {
   case TokenType::DoubleQuote:
     parseString(token);
     break;
+  case TokenType::Asterisk:
+    if (fstream_.peek() == '/') {
+        throwInvalidArgumentException(
+          token,
+          "Malformed block comment -- Missing \"/*\" delimiter");
+    }
+    break;
   default:
     break;
   }
