@@ -12,7 +12,7 @@ Token::Token(std::string data, uint32_t lineNumber, uint32_t charColumn,
 
 Token::Token(char data, uint32_t lineNumber, uint32_t charColumn,
              uint32_t charIndex, TokenType type) {
-  setData((char *)&data, lineNumber, charColumn, charIndex, type);
+  setData(std::string(&data), lineNumber, charColumn, charIndex, type);
 }
 
 const std::string &Token::getData() const { return data_; }

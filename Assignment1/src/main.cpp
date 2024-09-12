@@ -17,9 +17,8 @@ int main(int argc, char *argv[]) {
   }
 
   Tokenizer tokenizer(filename);
-  char c;
-
-  while (c = tokenizer.getNextChar(), c != Tokens::EndOfFile) {
+  char c = tokenizer.getNextChar();
+  while (c != Tokens::EndOfFile) {
     switch (c) {
     case Tokens::DoubleQuote: {
       tokenizer.putBackChar(c);
@@ -46,5 +45,6 @@ int main(int argc, char *argv[]) {
     default:
       std::cout << c;
     }
+    c = tokenizer.getNextChar();
   }
 }

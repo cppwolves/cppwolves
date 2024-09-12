@@ -1,6 +1,7 @@
 #include "Tokens.hpp"
 #include "Token.hpp"
 #include <cctype>
+#include <string>
 #include <unordered_map>
 
 static const std::unordered_map<TokenType, std::string> sTokenTypeNameMap{
@@ -147,7 +148,8 @@ const std::string getTokenName(char token) {
 }
 
 TokenType getTokenType(const std::string &value) {
-  if (auto type = sTokenTypeMap.find(value); type != sTokenTypeMap.end()) {
+  auto type = sTokenTypeMap.find(value);
+  if (type != sTokenTypeMap.end()) {
     return type->second;
   } else if (value.size() == 1 && std::isalnum((char)value[0])) {
     if (std::isalpha((char)value[0])) {
@@ -160,8 +162,8 @@ TokenType getTokenType(const std::string &value) {
 }
 
 TokenType getTokenType(char value) {
-  if (auto type = sTokenTypeCharMap.find(value);
-      type != sTokenTypeCharMap.end()) {
+  auto type = sTokenTypeCharMap.find(value);
+  if (type != sTokenTypeCharMap.end()) {
     return type->second;
   } else if (std::isalnum(value)) {
     if (std::isalpha(value)) {
@@ -170,16 +172,18 @@ TokenType getTokenType(char value) {
       return TokenType::Digit;
     }
   }
-  return getTokenType(std::string((char *)&value));
+  return getTokenType(std::to_string(value));
 }
 
 std::string getTokenValue(const TokenType &token) {
-  if (auto value = sTokenTypeValueMap.find(token);
-      value != sTokenTypeValueMap.end()) {
+  auto value = sTokenTypeValueMap.find(token);
+  if (value != sTokenTypeValueMap.end()) {
     return value->second;
-  } else if (auto value = sTokenTypeValueCharMap.find(token);
-             value != sTokenTypeValueCharMap.end()) {
-    return std::string((char *)&value->second);
+  } else {
+    auto value = sTokenTypeValueCharMap.find(token);
+    if (value != sTokenTypeValueCharMap.end()) {
+      return std::to_string(value->second);
+    }
   }
   return sTokenTypeValueMap.at(TokenType::None);
 }

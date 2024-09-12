@@ -65,17 +65,14 @@ Token Tokenizer::getNextToken() {
     parseString(token);
     break;
   case TokenType::Asterisk:
-    if (fstream_.peek() == '/') {
-        throwInvalidArgumentException(
-          token,
-          "Malformed block comment -- Missing \"/*\" delimiter");
+    if (fstream_.peek() == Tokens::LeftSlash) {
+      throwInvalidArgumentException(
+          token, "Malformed block comment -- Missing \"/*\" delimiter");
     }
     break;
   default:
     break;
   }
-
-  // std::cout << "Leaving getNextToken: " + token.toString();
 
   return token;
 }
@@ -86,6 +83,7 @@ void Tokenizer::putBackChar(char c) {
   assert(index_ >= 0 &&
          "Cannot put back char -- already at beginning of stream");
   assert(fstream_.putback(c) && "Putback failed");
+  fstream_.flush();
 
   if (c == Tokens::NewLine) {
     row_ = last_row_;
@@ -115,12 +113,12 @@ char Tokenizer::getNextChar() {
       }
       last_index_ = index_++;
     }
+    fstream_.flush();
   }
   return c;
 }
 
 Token Tokenizer::getNextCharToken() {
-  // std::cout << "Entering getNextCharToken\n";
   char c;
   TokenType token_type = TokenType::None;
 
@@ -129,7 +127,8 @@ Token Tokenizer::getNextCharToken() {
   } else {
     do {
       c = getNextChar();
-      if (TokenType type = Tokens::getTokenType(c); type != TokenType::None) {
+      TokenType type = Tokens::getTokenType(c);
+      if (type != TokenType::None) {
         token_type = type;
         break;
       }
@@ -137,17 +136,17 @@ Token Tokenizer::getNextCharToken() {
   }
 
   Token token = Token(c, row_, col_, index_, token_type);
-  // std::cout << "Leaving getNextCharToken: " + token.toString();
   return token;
 }
 
 void Tokenizer::parseSingleLineComment(Token &tokenStart) {
   assert(tokenStart.type_ == TokenType::LeftSlash &&
          (char)fstream_.peek() == Tokens::LeftSlash);
-  char c;
-  while (c = getNextChar(), c != Tokens::EndOfFile && c != Tokens::NewLine) {
+  char c = getNextChar();
+  while (c != Tokens::EndOfFile && c != Tokens::NewLine) {
     tokenStart.data_.push_back(c);
-    std::cout << " ";             // TEMP FOR IGNORE COMMENTS
+    std::cout << " "; // TEMP FOR IGNORE COMMENTS
+    c = getNextChar();
   }
   if (c != Tokens::NewLine) {
     throwInvalidArgumentException(
@@ -156,20 +155,20 @@ void Tokenizer::parseSingleLineComment(Token &tokenStart) {
   }
   tokenStart.data_.push_back(c);
   tokenStart.type_ = TokenType::SingleLineComment;
-  std::cout << " " << std::endl;   // TEMP FOR IGNORE COMMENTS
+  std::cout << " " << std::endl; // TEMP FOR IGNORE COMMENTS
 }
 
 void Tokenizer::parseString(Token &tokenStart) {
   assert(tokenStart.type_ == TokenType::DoubleQuote);
-  char c;
-  while (c = getNextChar(),
-         c != Tokens::EndOfFile && c != Tokens::DoubleQuote) {
+  char c = getNextChar();
+  while (c != Tokens::EndOfFile && c != Tokens::DoubleQuote) {
     tokenStart.data_.push_back(c);
     if (c == Tokens::RightSlash &&
         (char)fstream_.peek() == Tokens::DoubleQuote) {
       c = getNextChar();
       tokenStart.data_.push_back(c);
     }
+    c = getNextChar();
   }
   if (c != Tokens::DoubleQuote) {
     throwInvalidArgumentException(
@@ -182,15 +181,18 @@ void Tokenizer::parseString(Token &tokenStart) {
 void Tokenizer::parseBlockComment(Token &tokenStart) {
   assert(tokenStart.type_ == TokenType::LeftSlash &&
          (char)fstream_.peek() == Tokens::Asterisk);
-  char c;
-  std::cout << " " << std::flush;      // TEMP FOR IGNORE COMMENTS
-  while (c = getNextChar(), c != Tokens::EndOfFile) {
-    c == Tokens::NewLine ? std::cout << std::endl : std::cout << " " << std::flush;  // TEMP FOR IGNORE COMMENTS
+  char c = getNextChar();
+  // std::cout << " " << std::flush; // TEMP FOR IGNORE COMMENTS
+  while (c != Tokens::EndOfFile) {
+    c == Tokens::NewLine
+        ? std::cout << std::endl
+        : std::cout << " " << std::flush; // TEMP FOR IGNORE COMMENTS
     tokenStart.data_.push_back(c);
     if (c == Tokens::Asterisk && (char)fstream_.peek() == Tokens::LeftSlash) {
       c = getNextChar();
       break;
     }
+    c = getNextChar();
   }
   if (c != Tokens::LeftSlash) {
     throwInvalidArgumentException(
