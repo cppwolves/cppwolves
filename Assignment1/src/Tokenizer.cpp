@@ -147,6 +147,7 @@ void Tokenizer::parseSingleLineComment(Token &tokenStart) {
   char c;
   while (c = getNextChar(), c != Tokens::EndOfFile && c != Tokens::NewLine) {
     tokenStart.data_.push_back(c);
+    std::cout << " ";             // TEMP FOR IGNORE COMMENTS
   }
   if (c != Tokens::NewLine) {
     throwInvalidArgumentException(
@@ -155,6 +156,7 @@ void Tokenizer::parseSingleLineComment(Token &tokenStart) {
   }
   tokenStart.data_.push_back(c);
   tokenStart.type_ = TokenType::SingleLineComment;
+  std::cout << " " << std::endl;   // TEMP FOR IGNORE COMMENTS
 }
 
 void Tokenizer::parseString(Token &tokenStart) {
@@ -181,7 +183,9 @@ void Tokenizer::parseBlockComment(Token &tokenStart) {
   assert(tokenStart.type_ == TokenType::LeftSlash &&
          (char)fstream_.peek() == Tokens::Asterisk);
   char c;
+  std::cout << " " << std::flush;      // TEMP FOR IGNORE COMMENTS
   while (c = getNextChar(), c != Tokens::EndOfFile) {
+    c == Tokens::NewLine ? std::cout << std::endl : std::cout << " " << std::flush;  // TEMP FOR IGNORE COMMENTS
     tokenStart.data_.push_back(c);
     if (c == Tokens::Asterisk && (char)fstream_.peek() == Tokens::LeftSlash) {
       c = getNextChar();
