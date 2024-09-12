@@ -73,7 +73,7 @@ static const std::unordered_map<TokenType, char> sTokenTypeValueCharMap{
     {TokenType::Caret, (char)Tokens::Caret},
     {TokenType::LessThan, (char)Tokens::LessThan},
     {TokenType::GreaterThan, (char)Tokens::GreaterThan},
-    {TokenType::BooleanNot, Tokens::BooleanNot},
+    {TokenType::BooleanNot, (char)Tokens::BooleanNot},
 };
 
 static const std::unordered_map<TokenType, std::string> sTokenTypeValueMap{
@@ -133,7 +133,8 @@ static const std::unordered_map<std::string, TokenType> sTokenTypeMap{
 
 namespace Tokens {
 const std::string getTokenName(const TokenType &type) {
-  if (auto val = sTokenTypeNameMap.find(type); val != sTokenTypeNameMap.end()) {
+  auto val = sTokenTypeNameMap.find(type);
+  if (val != sTokenTypeNameMap.end()) {
     return val->second;
   }
   return sTokenTypeNameMap.at(TokenType::None);
@@ -148,14 +149,16 @@ const std::string getTokenName(char token) {
 }
 
 TokenType getTokenType(const std::string &value) {
-  auto type = sTokenTypeMap.find(value);
-  if (type != sTokenTypeMap.end()) {
-    return type->second;
-  } else if (value.size() == 1 && std::isalnum((char)value[0])) {
-    if (std::isalpha((char)value[0])) {
-      return TokenType::Letter;
-    } else {
-      return TokenType::Digit;
+  if (value.size() > 0) {
+    auto type = sTokenTypeMap.find(value);
+    if (type != sTokenTypeMap.end()) {
+      return type->second;
+    } else if (value.size() == 1 && std::isalnum((char)value[0])) {
+      if (std::isalpha((char)value[0])) {
+        return TokenType::Letter;
+      } else {
+        return TokenType::Digit;
+      }
     }
   }
   return sTokenTypeMap.at("None");
@@ -172,7 +175,7 @@ TokenType getTokenType(char value) {
       return TokenType::Digit;
     }
   }
-  return getTokenType(std::to_string(value));
+  return getTokenType(std::string(&value));
 }
 
 std::string getTokenValue(const TokenType &token) {
@@ -182,7 +185,7 @@ std::string getTokenValue(const TokenType &token) {
   } else {
     auto value = sTokenTypeValueCharMap.find(token);
     if (value != sTokenTypeValueCharMap.end()) {
-      return std::to_string(value->second);
+      return std::string(&value->second);
     }
   }
   return sTokenTypeValueMap.at(TokenType::None);

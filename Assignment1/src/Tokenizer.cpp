@@ -113,7 +113,6 @@ char Tokenizer::getNextChar() {
       }
       last_index_ = index_++;
     }
-    fstream_.flush();
   }
   return c;
 }
