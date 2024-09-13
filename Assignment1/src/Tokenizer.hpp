@@ -33,7 +33,7 @@ private:
   void parseBlockComment(Token &token);
   void parseString(Token &token);
 
-  std::invalid_argument& throwInvalidArgumentException(Token& token, std::string&& message);
+  void printErrorAndExit(std::string &&message);
 
 private:
   uint32_t row_{};

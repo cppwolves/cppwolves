@@ -66,8 +66,9 @@ Token Tokenizer::getNextToken() {
     break;
   case TokenType::Asterisk:
     if (fstream_.peek() == Tokens::LeftSlash) {
-      throwInvalidArgumentException(
-          token, "Malformed block comment -- Missing \"/*\" delimiter");
+      printErrorAndExit(
+          "ERROR: Program contains C-style, unterminated comment on line " +
+          std::to_string(token.getLineNumber()));
     }
     break;
   default:
@@ -148,9 +149,9 @@ void Tokenizer::parseSingleLineComment(Token &tokenStart) {
     c = getNextChar();
   }
   if (c != Tokens::NewLine) {
-    throwInvalidArgumentException(
-        tokenStart,
-        "Malformed single line comment -- Missing new line character");
+    printErrorAndExit(
+        "ERROR: Program contains C-style, unterminated comment on line " +
+        std::to_string(tokenStart.getLineNumber()));
   }
   tokenStart.data_.push_back(c);
   tokenStart.type_ = TokenType::SingleLineComment;
@@ -170,8 +171,8 @@ void Tokenizer::parseString(Token &tokenStart) {
     c = getNextChar();
   }
   if (c != Tokens::DoubleQuote) {
-    throwInvalidArgumentException(
-        tokenStart, "Malformed string -- missing closing double quote");
+    printErrorAndExit("ERROR: Program contains unterminated string on line " +
+                      std::to_string(tokenStart.getLineNumber()));
   }
   tokenStart.data_.push_back(c);
   tokenStart.type_ = TokenType::None;
@@ -194,16 +195,15 @@ void Tokenizer::parseBlockComment(Token &tokenStart) {
     c = getNextChar();
   }
   if (c != Tokens::LeftSlash) {
-    throwInvalidArgumentException(
-        tokenStart, "Malformed block comment -- Missing \"*/\" delimiter");
+    printErrorAndExit(
+        "ERROR: Program contains C-style, unterminated comment on line " +
+        std::to_string(tokenStart.getLineNumber()));
   }
   tokenStart.data_.push_back(c);
   tokenStart.type_ = TokenType::BlockComment;
 }
 
-std::invalid_argument &
-Tokenizer::throwInvalidArgumentException(Token &token, std::string &&message) {
-  throw std::invalid_argument("(Line " + std::to_string(token.getLineNumber()) +
-                              ":" + std::to_string(token.getCharColumn()) +
-                              ") " + message);
+void Tokenizer::printErrorAndExit(std::string &&message) {
+  std::cerr << message << '\n';
+  exit(1);
 }
