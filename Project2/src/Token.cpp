@@ -10,9 +10,9 @@ Token::Token(std::string data, uint32_t lineNumber, uint32_t charColumn,
   setData(data, lineNumber, charColumn, charIndex, type);
 }
 
-Token::Token(char data, uint32_t lineNumber, uint32_t charColumn,
+Token::Token(char &data, uint32_t lineNumber, uint32_t charColumn,
              uint32_t charIndex, TokenType type) {
-  setData(std::string(&data), lineNumber, charColumn, charIndex, type);
+  setData(std::string(1, data), lineNumber, charColumn, charIndex, type);
 }
 
 const std::string &Token::getData() const { return data_; }
@@ -24,6 +24,14 @@ uint32_t Token::getCharIndex() const { return char_index_; }
 uint32_t Token::getCharColumn() const { return char_col_; }
 
 TokenType Token::getType() const { return type_; }
+
+Token *Token::getRightSibling() { return right_sibling_; }
+
+Token *Token::getLeftChild() { return left_child_; }
+
+void Token::setRightSibling(Token *token) { right_sibling_ = token; }
+
+void Token::setLeftChild(Token *token) { left_child_ = token; }
 
 std::string Token::toString() const {
   return "line: " + std::to_string(line_number_) +

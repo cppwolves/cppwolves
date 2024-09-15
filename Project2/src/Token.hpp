@@ -11,14 +11,21 @@ class Token {
 public:
   explicit Token(std::string data, uint32_t lineNumber, uint32_t charColumn,
                  uint32_t charPosition, TokenType type);
-  explicit Token(char data, uint32_t lineNumber, uint32_t charColumn,
+  explicit Token(char &data, uint32_t lineNumber, uint32_t charColumn,
                  uint32_t charPosition, TokenType type);
+  ~Token() = default;
 
   const std::string &getData() const;
   uint32_t getLineNumber() const;
   uint32_t getCharIndex() const;
   uint32_t getCharColumn() const;
   TokenType getType() const;
+
+  Token *getRightSibling();
+  Token *getLeftChild();
+
+  void setRightSibling(Token *token);
+  void setLeftChild(Token *token);
 
   std::string toString() const;
 
@@ -39,6 +46,9 @@ private:
   uint32_t char_col_;
   TokenType type_;
   std::string data_;
+
+  Token *right_sibling_{nullptr};
+  Token *left_child_{nullptr};
 
   friend class Tokenizer;
 };

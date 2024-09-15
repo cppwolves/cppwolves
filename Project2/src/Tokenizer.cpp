@@ -5,12 +5,11 @@
 #include <iostream>
 #include <string>
 
-Tokenizer::Tokenizer()
-    : row_(0), index_(-1), col_(-1), fstream_(nullptr), token_stack_({}) {}
+Tokenizer::Tokenizer() : row_(0), index_(-1), col_(-1), fstream_(nullptr) {}
 
 Tokenizer::Tokenizer(std::string filename)
     : row_(0), index_(-1), col_(-1), filename_(std::move(filename)),
-      fstream_({}), token_stack_({}) {
+      fstream_({}) {
   fstream_.open(filename_);
   assert(fstream_.is_open() && "Could not open file");
   fstream_.seekg(0);
@@ -18,30 +17,15 @@ Tokenizer::Tokenizer(std::string filename)
 
 Tokenizer::~Tokenizer() { fstream_.close(); }
 
-void Tokenizer::setTokenData(Token &token, std::string data,
+void Tokenizer::setTokenData(Token *token, std::string data,
                              uint32_t lineNumber, uint32_t charColumn,
                              uint32_t charIndex, TokenType type) {
-  token.setData(data, lineNumber, charColumn, charIndex, type);
+  token->setData(data, lineNumber, charColumn, charIndex, type);
 }
 
-Token Tokenizer::getNextToken() {
-  if (!token_stack_.empty()) {
-    Token token = token_stack_.back();
-    token_stack_.pop_back();
-
-    fstream_.seekg(token.char_index_);
-    row_ = token.line_number_;
-    last_row_ = row_ - 1;
-    index_ = token.char_index_;
-    last_index_ = index_ - 1;
-    col_ = token.char_col_;
-    last_col_ = col_ - 1;
-
-    return token;
-  }
-
-  Token token = getNextCharToken();
-  switch (token.type_) {
+Token *Tokenizer::getNextToken() {
+  Token *token = getNextCharToken();
+  switch (token->type_) {
   case TokenType::LeftSlash: {
     char c = getNextChar();
     switch (c) {
@@ -68,7 +52,7 @@ Token Tokenizer::getNextToken() {
     if (fstream_.peek() == Tokens::LeftSlash) {
       printErrorAndExit(
           "ERROR: Program contains C-style, unterminated comment on line " +
-          std::to_string(token.getLineNumber()));
+          std::to_string(token->getLineNumber()));
     }
     break;
   default:
@@ -77,8 +61,6 @@ Token Tokenizer::getNextToken() {
 
   return token;
 }
-
-void Tokenizer::putBackToken(Token token) { token_stack_.push_back(token); }
 
 void Tokenizer::putBackChar(char c) {
   assert(index_ >= 0 &&
@@ -118,7 +100,7 @@ char Tokenizer::getNextChar() {
   return c;
 }
 
-Token Tokenizer::getNextCharToken() {
+Token *Tokenizer::getNextCharToken() {
   char c;
   TokenType token_type = TokenType::None;
 
@@ -135,51 +117,50 @@ Token Tokenizer::getNextCharToken() {
     } while (fstream_.good() && c != Tokens::EndOfFile);
   }
 
-  Token token = Token(c, row_, col_, index_, token_type);
-  return token;
+  return new Token(c, row_, col_, index_, token_type);
 }
 
-void Tokenizer::parseSingleLineComment(Token &tokenStart) {
-  assert(tokenStart.type_ == TokenType::LeftSlash &&
+void Tokenizer::parseSingleLineComment(Token *tokenStart) {
+  assert(tokenStart->type_ == TokenType::LeftSlash &&
          (char)fstream_.peek() == Tokens::LeftSlash);
   char c = getNextChar();
   while (c != Tokens::EndOfFile && c != Tokens::NewLine) {
-    tokenStart.data_.push_back(c);
+    tokenStart->data_.push_back(c);
     std::cout << " "; // TEMP FOR IGNORE COMMENTS
     c = getNextChar();
   }
   if (c != Tokens::NewLine) {
     printErrorAndExit(
         "ERROR: Program contains C-style, unterminated comment on line " +
-        std::to_string(tokenStart.getLineNumber()));
+        std::to_string(tokenStart->getLineNumber()));
   }
-  tokenStart.data_.push_back(c);
-  tokenStart.type_ = TokenType::SingleLineComment;
+  tokenStart->data_.push_back(c);
+  tokenStart->type_ = TokenType::SingleLineComment;
   std::cout << " " << std::endl; // TEMP FOR IGNORE COMMENTS
 }
 
-void Tokenizer::parseString(Token &tokenStart) {
-  assert(tokenStart.type_ == TokenType::DoubleQuote);
+void Tokenizer::parseString(Token *tokenStart) {
+  assert(tokenStart->type_ == TokenType::DoubleQuote);
   char c = getNextChar();
   while (c != Tokens::EndOfFile && c != Tokens::DoubleQuote) {
-    tokenStart.data_.push_back(c);
+    tokenStart->data_.push_back(c);
     if (c == Tokens::RightSlash &&
         (char)fstream_.peek() == Tokens::DoubleQuote) {
       c = getNextChar();
-      tokenStart.data_.push_back(c);
+      tokenStart->data_.push_back(c);
     }
     c = getNextChar();
   }
   if (c != Tokens::DoubleQuote) {
     printErrorAndExit("ERROR: Program contains unterminated string on line " +
-                      std::to_string(tokenStart.getLineNumber()));
+                      std::to_string(tokenStart->getLineNumber()));
   }
-  tokenStart.data_.push_back(c);
-  tokenStart.type_ = TokenType::None;
+  tokenStart->data_.push_back(c);
+  tokenStart->type_ = TokenType::None;
 }
 
-void Tokenizer::parseBlockComment(Token &tokenStart) {
-  assert(tokenStart.type_ == TokenType::LeftSlash &&
+void Tokenizer::parseBlockComment(Token *tokenStart) {
+  assert(tokenStart->type_ == TokenType::LeftSlash &&
          (char)fstream_.peek() == Tokens::Asterisk);
   char c = getNextChar();
   // std::cout << " " << std::flush; // TEMP FOR IGNORE COMMENTS
@@ -187,7 +168,7 @@ void Tokenizer::parseBlockComment(Token &tokenStart) {
     c == Tokens::NewLine
         ? std::cout << std::endl
         : std::cout << " " << std::flush; // TEMP FOR IGNORE COMMENTS
-    tokenStart.data_.push_back(c);
+    tokenStart->data_.push_back(c);
     if (c == Tokens::Asterisk && (char)fstream_.peek() == Tokens::LeftSlash) {
       c = getNextChar();
       break;
@@ -197,10 +178,10 @@ void Tokenizer::parseBlockComment(Token &tokenStart) {
   if (c != Tokens::LeftSlash) {
     printErrorAndExit(
         "ERROR: Program contains C-style, unterminated comment on line " +
-        std::to_string(tokenStart.getLineNumber()));
+        std::to_string(tokenStart->getLineNumber()));
   }
-  tokenStart.data_.push_back(c);
-  tokenStart.type_ = TokenType::BlockComment;
+  tokenStart->data_.push_back(c);
+  tokenStart->type_ = TokenType::BlockComment;
 }
 
 void Tokenizer::printErrorAndExit(std::string &&message) {

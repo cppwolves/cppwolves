@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
     switch (c) {
     case Tokens::DoubleQuote: {
       tokenizer.putBackChar(c);
-      std::cout << tokenizer.getNextToken().getData();
+      std::cout << tokenizer.getNextToken()->getData();
     } break;
     case Tokens::LeftSlash: {
       char t = tokenizer.getNextChar();
@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
       case Tokens::Asterisk: {
         tokenizer.putBackChar(t);
         tokenizer.putBackChar(c);
-        Token token = tokenizer.getNextToken();
+        Token *token = tokenizer.getNextToken();
       } break;
       default:
         tokenizer.putBackChar(t);
