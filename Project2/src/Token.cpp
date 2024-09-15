@@ -25,13 +25,13 @@ uint32_t Token::getCharColumn() const { return char_col_; }
 
 TokenType Token::getType() const { return type_; }
 
-Token *Token::getRightSibling() { return right_sibling; }
+Token *Token::getRightSibling() { return right_sibling_; }
 
-Token *Token::getLeftChild() { return left_child; }
+Token *Token::getLeftChild() { return left_child_; }
 
-void Token::setRightSibling(Token *token) { right_sibling = token; }
+void Token::setRightSibling(Token *token) { right_sibling_ = token; }
 
-void Token::setLeftChild(Token *token) { left_child = token; }
+void Token::setLeftChild(Token *token) { left_child_ = token; }
 
 std::string Token::toString() const {
   return "line: " + std::to_string(line_number_) +

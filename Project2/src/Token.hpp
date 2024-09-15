@@ -45,8 +45,8 @@ private:
   TokenType type_;
   std::string data_;
 
-  Token *right_sibling{nullptr};
-  Token *left_child{nullptr};
+  Token *right_sibling_{nullptr};
+  Token *left_child_{nullptr};
 
   friend class Tokenizer;
 };
