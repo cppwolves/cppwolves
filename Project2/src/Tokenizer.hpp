@@ -11,8 +11,13 @@
 class Token;
 
 class Tokenizer {
+  enum Flag {
+    NONE,
+    READING_STRING,
+    READ_COMMENT,
+  };
+
   enum State {
-    RUNNING,
     NOT_INITIALIZED,
     END_OF_FILE,
     READ_START,
@@ -23,12 +28,8 @@ class Tokenizer {
     READ_CHAR,
     READ_DIGIT,
     READ_NUMBER,
-    READ_STRING,
     READ_SINGLE_LINE_COMMENT,
     READ_BLOCK_COMMENT,
-    READ_COMMENT,
-
-    ESCAPE,
   };
 
   enum ExitCode {
@@ -80,6 +81,6 @@ private:
   std::ifstream ifstream_{};
 
   State state_{};
-  State last_state_{NOT_INITIALIZED};
+  Flag flag_{NONE};
 };
 #endif

@@ -41,7 +41,7 @@ void Tokenizer::stateReadComment(Token *token, char &c) {
       token->type_ = TokenType::BlockComment;
       state_ = READ_BLOCK_COMMENT;
     }
-    last_state_ = READ_COMMENT;
+    flag_ = READ_COMMENT;
   } break;
   case TokenType::SingleLineComment: {
     if (c == Tokens::NewLine) {
@@ -49,16 +49,16 @@ void Tokenizer::stateReadComment(Token *token, char &c) {
     } else {
       state_ = READ_SINGLE_LINE_COMMENT;
     }
-    last_state_ = READ_COMMENT;
+    flag_ = READ_COMMENT;
   } break;
   case TokenType::BlockComment: {
     if (c == Tokens::Asterisk && peekNextChar() == Tokens::LeftSlash) {
       token->data_.push_back(getNextChar());
       state_ = READ_END;
-      last_state_ = READ_END;
+      flag_ = NONE;
     } else {
       state_ = READ_BLOCK_COMMENT;
-      last_state_ = READ_COMMENT;
+      flag_ = READ_COMMENT;
     }
   } break;
   default:
@@ -82,7 +82,7 @@ void Tokenizer::stateReadDigit(Token *token, const char &c) {
   if (!std::isalnum(c)) {
     // This isn't a valid char
     state_ = READ_END;
-    last_state_ = READ_END;
+    flag_ = NONE;
     putBackChar(c);
     return;
   }
@@ -116,7 +116,7 @@ void Tokenizer::stateReadDigit(Token *token, const char &c) {
     // No idea what this was
     putBackChar(c);
     state_ = READ_END;
-    last_state_ = READ_END;
+    flag_ = NONE;
     break;
   }
 }
@@ -133,46 +133,51 @@ Token *Tokenizer::stateReadStart() {
   // Assume this will be the only char we'll collect
   state_ = READ_END;
 
-  switch (type) {
-  case TokenType::DoubleQuote:
+  if (type == TokenType::DoubleQuote) {
     // If we are currently inside a string and see the ending '"', we're done
-    last_state_ = last_state_ == READ_STRING ? READ_END : READ_STRING;
-    break;
-  case TokenType::LeftSlash: {
-    // This may be a comment or divide
-    char peek = peekNextChar();
-    if (peek == Tokens::LeftSlash || peek == Tokens::Asterisk) {
-      // We have a comment to read
-      state_ = READ_COMMENT;
-      last_state_ = READ_COMMENT;
-    } else {
-      type = TokenType::Divide;
-    }
-  } break;
-  case TokenType::Asterisk: {
-    if (peekNextChar() == Tokens::LeftSlash) {
-      // Since we're not currently in a comment or string, this should not be
-      // here.
-      printErrorAndExit(EXIT_MISSING_BLOCK_COMMENT_START, nullptr);
-    }
-  } break;
-  case TokenType::Letter:
-    // Continue on with collecting chars
+    flag_ = flag_ == READING_STRING ? NONE : READING_STRING;
+  } else if (flag_ == READING_STRING) {
     state_ = READ_CHAR;
-    break;
-  case TokenType::Digit:
-    // We are now collecting digits (numbers)
-    state_ = READ_DIGIT;
-    break;
-  case TokenType::Plus:
-  case TokenType::Minus:
-    // We may have a -/+ number if the next char is a digit
-    if (std::isdigit(peekNextChar())) {
-      state_ = READ_NUMBER;
+  } else {
+    // Otherwise, we can continue as normal
+    switch (type) {
+    case TokenType::LeftSlash: {
+      // This may be a comment or divide
+      char peek = peekNextChar();
+      if (peek == Tokens::LeftSlash || peek == Tokens::Asterisk) {
+        // We have a comment to read
+        state_ = peek == Tokens::LeftSlash ? READ_SINGLE_LINE_COMMENT
+                                           : READ_BLOCK_COMMENT;
+        flag_ = READ_COMMENT;
+      } else {
+        type = TokenType::Divide;
+      }
+    } break;
+    case TokenType::Asterisk: {
+      if (peekNextChar() == Tokens::LeftSlash) {
+        // Since we're not currently in a comment or string, this should not be
+        // here.
+        printErrorAndExit(EXIT_MISSING_BLOCK_COMMENT_START, nullptr);
+      }
+    } break;
+    case TokenType::Letter:
+      // Continue on with collecting chars
+      state_ = READ_CHAR;
+      break;
+    case TokenType::Digit:
+      // We are now collecting digits (numbers)
+      state_ = READ_DIGIT;
+      break;
+    case TokenType::Plus:
+    case TokenType::Minus:
+      // We may have a -/+ number if the next char is a digit
+      if (std::isdigit(peekNextChar())) {
+        state_ = READ_NUMBER;
+      }
+      break;
+    default:
+      break;
     }
-    break;
-  default:
-    break;
   }
   return new Token(c, row_, col_, index_, type);
 }
@@ -195,7 +200,6 @@ Token *Tokenizer::getNextToken() {
       case READ_DIGIT:
         stateReadDigit(token, c);
         break;
-      case READ_COMMENT:
       case READ_SINGLE_LINE_COMMENT:
       case READ_BLOCK_COMMENT:
         stateReadComment(token, c);
