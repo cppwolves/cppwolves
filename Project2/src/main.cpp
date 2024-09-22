@@ -20,11 +20,20 @@ int main(int argc, char *argv[]) {
   Token *token = tokenizer.getNextToken();
   Token *head = token;
 
+  // Output issues: 
+  // - Not tokenizing/typing: semicolon, identifier, assignment operator, integer
+  // - String tokens are being prematurally terminated
+  // - His output doesn't consider '\n' a token, ours does
+
+  std::cout << "Token list:" << std::endl;
+
   while (token->getType() != TokenType::EndOfFile) {
     if (token->getType() != TokenType::BlockComment &&
         token->getType() != TokenType::SingleLineComment) {
-      std::cout << token->getData() << '\n';
+      std::cout << "Token type: " << Tokens::getTokenName(token->getType()) << '\n';
+      std::cout << "Token:\t" << token->getData() << "\n\n";
     }
     token = tokenizer.getNextToken();
   }
 }
+
