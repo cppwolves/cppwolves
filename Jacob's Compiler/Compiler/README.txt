@@ -16,7 +16,7 @@ Result:
     Same as linux.
 
 
-Note that make files are basically exclusive to linux, so tring to use make on a windows machine without
+Note that make files are basically exclusive to linux, so tryng to use make on a windows machine without
 WSL installed results in the terminal returning an unknown command error. If you don't have WSL install it
 or simply use the windows command I provided. Just note the windows command line is not robust and wont work
 if we add new files to the project.
