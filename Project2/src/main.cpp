@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
   // - String tokens are being prematurally terminated
   // - His output doesn't consider '\n' a token, ours does
 
-  std::cout << "Token list:" << std::endl;
+  std::cout << "Token list:\n" << std::endl;
 
   while (token->getType() != TokenType::EndOfFile) {
     if (token->getType() != TokenType::BlockComment &&

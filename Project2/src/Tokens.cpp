@@ -47,6 +47,8 @@ static const std::unordered_map<TokenType, std::string> sTokenTypeNameMap{
     {TokenType::BlockComment, "BlockComment"},
     {TokenType::BlockCommentStart, "BlockCommentStart"},
     {TokenType::BlockCommentEnd, "BlockCommentEnd"},
+    {TokenType::AssignmentOperator, "AssignmentOperator"},
+    {TokenType::Semicolon, "Semicolon"},
 };
 
 static const std::unordered_map<TokenType, char> sTokenTypeValueCharMap{
@@ -76,6 +78,8 @@ static const std::unordered_map<TokenType, char> sTokenTypeValueCharMap{
     {TokenType::LessThan, (char)Tokens::LessThan},
     {TokenType::GreaterThan, (char)Tokens::GreaterThan},
     {TokenType::BooleanNot, (char)Tokens::BooleanNot},
+    {TokenType::AssignmentOperator, (char)Tokens::AssignmentOperator},
+    {TokenType::Semicolon, (char)Tokens::Semicolon},
 };
 
 static const std::unordered_map<TokenType, std::string> sTokenTypeValueMap{
@@ -118,6 +122,8 @@ static const std::unordered_map<char, TokenType> sTokenTypeCharMap{
     {Tokens::LessThan, TokenType::LessThan},
     {Tokens::GreaterThan, TokenType::GreaterThan},
     {Tokens::BooleanNot, TokenType::BooleanNot},
+    {Tokens::AssignmentOperator, TokenType::AssignmentOperator},
+    {Tokens::Semicolon, TokenType::Semicolon,}
 };
 
 static const std::unordered_map<std::string, TokenType> sTokenTypeMap{

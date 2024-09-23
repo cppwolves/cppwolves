@@ -48,6 +48,8 @@ enum class TokenType {
   BlockCommentEnd,
   String,
   Number,
+  AssignmentOperator,
+  Semicolon,
 };
 
 namespace Tokens {
@@ -77,6 +79,8 @@ static const char Caret = '^';
 static const char LessThan = '<';
 static const char GreaterThan = '>';
 static const char BooleanNot = '!';
+static const char AssignmentOperator = '=';
+static const char Semicolon = ';';
 
 static const std::string None = "None";
 static const std::string LessThanEqual = "<=";
