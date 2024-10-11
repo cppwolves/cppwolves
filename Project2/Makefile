@@ -1,7 +1,20 @@
-SOURCES := $(wildcard src/*.cpp)
+# Compiler and flags
+CXX = g++
+CXXFLAGS = -std=c++17
 
-all:
-	mkdir bin; g++ -std=c++17 -g $(SOURCES) -o bin/main
+# Output executable
+TARGET = program.exe
 
+# Source files
+SRCS = main.cpp token.cpp tokenizer.cpp
+
+# Default target
+all: $(TARGET)
+
+# Build the executable
+$(TARGET):
+	$(CXX) $(CXXFLAGS) $(SRCS) -o $(TARGET)
+
+# Clean rule to remove the executable
 clean:
-	rm -r bin
+	rm -f $(TARGET)
