@@ -1,0 +1,19 @@
+procedure -> main -> ( -> void -> ) -> NULL
+                                  |
+                                  v
+                                  { -> NULL
+                                  |
+                                  v
+                                  int -> counter -> ; -> NULL
+                                                    |
+                                                    v
+                                                    counter -> = -> 2 -> ; -> NULL
+                                                                         |
+                                                                         v
+                                                                         printf -> ( -> " -> counter = %d\n -> " -> , -> counter -> ) -> ; -> NULL
+                                                                                                                                         |
+                                                                                                                                         v
+                                                                                                                                         } -> NULL
+                                                                                                                                         |
+                                                                                                                                         v
+                                                                                                                                         NULL
