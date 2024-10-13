@@ -6,7 +6,7 @@ CXXFLAGS = -std=c++17
 TARGET = program.exe
 
 # Source files
-SRCS = main.cpp token.cpp tokenizer.cpp
+SRCS = main.cpp token.cpp tokenizer.cpp cst.cpp
 
 # Default target
 all: $(TARGET)
