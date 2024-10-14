@@ -15,9 +15,7 @@ CSTree::CSTree(std::vector<Token> &tokens) {
 
   _nIt = tokens.begin();
 
-  for (_nIt++; _nIt != tokens.end(); _nIt++) {
-    handleOpenCloseDelimiters();
-
+  for (; _nIt != tokens.end(); ++_nIt) {
     // First, check the next node
     TokenNode *next = new TokenNode(*_nIt);
     switch (next->type) {
@@ -52,11 +50,13 @@ CSTree::CSTree(std::vector<Token> &tokens) {
 }
 
 void CSTree::addSiblingAndAdvance(TokenNode *node) {
+  handleOpenCloseDelimiters(node);
   _current->sibling = node;
   _current = node;
 }
 
 void CSTree::addChildAndAdvance(TokenNode *node) {
+  handleOpenCloseDelimiters(node);
   _current->child = node;
   _current = node;
 }
@@ -66,8 +66,8 @@ void CSTree::throwTokenError(TokenNode *node, const std::string &message) {
                            "]: " + message);
 }
 
-void CSTree::handleOpenCloseDelimiters() {
-  switch (_current->type) {
+void CSTree::handleOpenCloseDelimiters(TokenNode *node) {
+  switch (node->type) {
   case TokenType::L_BRACE: {
     _openStack.push(TokenType::L_BRACE);
     break;
@@ -78,7 +78,7 @@ void CSTree::handleOpenCloseDelimiters() {
   }
   case TokenType::R_PAREN: {
     if (_openStack.top() != TokenType::L_PAREN) {
-      throwTokenError(_current, "R-Paren has no L-Paren");
+      throwTokenError(node, "R-Paren has no L-Paren");
     }
     _openStack.pop();
     break;
@@ -89,7 +89,7 @@ void CSTree::handleOpenCloseDelimiters() {
   }
   case TokenType::R_BRACKET: {
     if (_openStack.top() != TokenType::L_BRACKET) {
-      throwTokenError(_current, "R-Bracket has no L-Bracket");
+      throwTokenError(node, "R-Bracket has no L-Bracket");
     }
     _openStack.pop();
     break;
@@ -104,8 +104,6 @@ void CSTree::isFor() {
     if (lParen->type != TokenType::L_PAREN) {
       throwTokenError(lParen, "Missing L-Paren");
     }
-
-    _openStack.push(TokenType::L_PAREN);
 
     addSiblingAndAdvance(lParen);
 
@@ -134,17 +132,13 @@ void CSTree::isFor() {
       throwTokenError(semiColon2, "Missing expression");
     }
 
-    TokenNode *rParen = new TokenNode(*_nIt++);
+    TokenNode *rParen = new TokenNode(*_nIt);
     if (rParen->type != TokenType::R_PAREN) {
       throwTokenError(rParen, "Missing R-Paren");
     }
     if (_openStack.top() != TokenType::L_PAREN) {
       throwTokenError(rParen, "R-Paren has no L-Paren");
     }
-
-    // This will be taken care of when the function returns
-    // _openStack.pop();
-    // std::cout << "Popped L_PAREN\n";
 
     addSiblingAndAdvance(rParen);
   } catch (const std::exception &ex) {
@@ -186,7 +180,6 @@ bool CSTree::isInitializationExpression() {
 
     // FOR TESTING, just to get single number
     addSiblingAndAdvance(unknown);
-    return true;
 
     // else, must be an expression to be valid
     // isExpression(); create
@@ -263,7 +256,6 @@ bool CSTree::isBooleanExpression() {
       case TokenType::L_PAREN: {
         // L-Paren & identifier & boolean op & boolean expression (recursion)
         // & R-Paren
-        _openStack.push(TokenType::L_PAREN);
 
         // add L-Paren to tree
 
@@ -296,10 +288,6 @@ bool CSTree::isBooleanExpression() {
         if (next->type != TokenType::R_PAREN) {
           throwTokenError(next, "Expected R-Paren");
         }
-        if (_openStack.top() != TokenType::L_PAREN) {
-          throwTokenError(next, "R-Paren has no L-Paren");
-        }
-        _openStack.pop();
 
         // add R-Paren to tree
         addSiblingAndAdvance(next);
@@ -342,7 +330,6 @@ bool CSTree::isNumericalExpression() {
 
       if (next->type == TokenType::L_PAREN) {
         // operand + operator + L-Paren + numExp + R-Paren
-        _openStack.push(TokenType::L_PAREN);
 
         // add L-Paren to tree
 
@@ -356,10 +343,6 @@ bool CSTree::isNumericalExpression() {
         if (next->type != TokenType::R_PAREN) {
           throwTokenError(next, "Missing R-Paren");
         }
-        if (_openStack.top() != TokenType::L_PAREN) {
-          throwTokenError(next, "R-Paren has no L-Paren");
-        }
-        _openStack.pop();
 
         // add R-Paren to tree
         addSiblingAndAdvance(next);
@@ -422,8 +405,6 @@ bool CSTree::isNumericalExpression() {
       // all this can be basically reduced to ( numExp ) or ( numExp )
       // operator numExp
 
-      _openStack.push(TokenType::L_PAREN);
-
       addSiblingAndAdvance(first);
 
       if (!isNumericalExpression()) {
@@ -434,10 +415,6 @@ bool CSTree::isNumericalExpression() {
       if (next->type != TokenType::R_PAREN) {
         throwTokenError(next, "Missing R-Paren");
       }
-      if (_openStack.top() != TokenType::L_PAREN) {
-        throwTokenError(next, "R-Paren has no L-Paren");
-      }
-      _openStack.pop();
 
       addSiblingAndAdvance(next);
       return true;
