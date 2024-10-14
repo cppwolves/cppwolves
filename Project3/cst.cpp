@@ -24,8 +24,7 @@ CSTree::CSTree(std::vector<Token> &tokens) {
     // The next token is a delimiter
     case TokenType::L_BRACE:
     case TokenType::R_BRACE:
-    case TokenType::ELSE:
-    case TokenType::SEMICOLON: {
+    case TokenType::ELSE: {
       addChildAndAdvance(next);
       break;
     }
