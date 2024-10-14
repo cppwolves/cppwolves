@@ -1,39 +1,41 @@
 #ifndef CSTREE_HPP
 #define CSTREE_HPP
 
-#include <iostream>
+#include <stack>
 #include <vector>
 
 #include "token.hpp"
-#include "token_enum.hpp"
 #include "token_node.hpp"
 
 class CSTree {
-   public:
-    CSTree(std::vector<Token>& tokens);
-    TokenNode* head() { return _head; }
+public:
+  CSTree(std::vector<Token> &tokens);
+  TokenNode *head() { return _head; }
 
-   private:
-    TokenNode* _head;
+private:
+  TokenNode *_head;
 
-    TokenNode* _previous;
-    TokenNode* _current;
+  TokenNode *_previous;
+  TokenNode *_current;
 
-    std::vector<Token>::iterator _nIt;
+  std::vector<Token>::iterator _nIt;
 
-   private:
-    void isFor();
+private:
+  void isFor();
+  void addSiblingAndAdvance(TokenNode *node);
+  void addChildAndAdvance(TokenNode *node);
 
-    bool isInitializationExpression();
-    bool isBooleanExpression();
-    bool isNumericalExpression();
-    bool isExpression();
+  bool isInitializationExpression();
+  bool isBooleanExpression();
+  bool isNumericalExpression();
+  bool isExpression();
 
-   private:
-    bool isOperand(TokenNode* token);
+private:
+  bool isOperand(TokenNode *token);
 
-   private:
-    bool _operandFlag;
+private:
+  bool _operandFlag;
+  std::stack<TokenType> _openStack{};
 };
 
-#endif  // CSTREE_HPP
+#endif // CSTREE_HPP
