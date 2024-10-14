@@ -31,8 +31,9 @@ private:
   bool isExpression();
 
 private:
+  void handleOpenCloseDelimiters();
   bool isOperand(TokenNode *token);
-   void throwTokenError(TokenNode* node, const std::string& message);
+  void throwTokenError(TokenNode *node, const std::string &message);
 
 private:
   bool _operandFlag;

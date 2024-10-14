@@ -16,34 +16,8 @@ CSTree::CSTree(std::vector<Token> &tokens) {
   _nIt = tokens.begin();
 
   for (_nIt++; _nIt != tokens.end(); _nIt++) {
-    switch (_current->type) {
-    case TokenType::L_BRACE: {
-      _openStack.push(TokenType::L_BRACE);
-      break;
-    }
-    case TokenType::L_PAREN: {
-      _openStack.push(TokenType::L_PAREN);
-      break;
-    }
-    case TokenType::R_PAREN: {
-      if (_openStack.top() != TokenType::L_PAREN) {
-        throwTokenError(_current, "R-Paren has no L-Paren");
-      }
-      _openStack.pop();
-      break;
-    }
-    case TokenType::L_BRACKET: {
-      _openStack.push(TokenType::L_BRACKET);
-      break;
-    }
-    case TokenType::R_BRACKET: {
-      if (_openStack.top() != TokenType::L_BRACKET) {
-        throwTokenError(_current, "R-Bracket has no L-Bracket");
-      }
-      _openStack.pop();
-      break;
-    }
-    }
+    handleOpenCloseDelimiters();
+
     // First, check the next node
     TokenNode *next = new TokenNode(*_nIt);
     switch (next->type) {
@@ -89,6 +63,37 @@ void CSTree::addChildAndAdvance(TokenNode *node) {
 void CSTree::throwTokenError(TokenNode *node, const std::string &message) {
   throw std::runtime_error("[line " + std::to_string(node->lineNumber) +
                            "]: " + message);
+}
+
+void CSTree::handleOpenCloseDelimiters() {
+  switch (_current->type) {
+  case TokenType::L_BRACE: {
+    _openStack.push(TokenType::L_BRACE);
+    break;
+  }
+  case TokenType::L_PAREN: {
+    _openStack.push(TokenType::L_PAREN);
+    break;
+  }
+  case TokenType::R_PAREN: {
+    if (_openStack.top() != TokenType::L_PAREN) {
+      throwTokenError(_current, "R-Paren has no L-Paren");
+    }
+    _openStack.pop();
+    break;
+  }
+  case TokenType::L_BRACKET: {
+    _openStack.push(TokenType::L_BRACKET);
+    break;
+  }
+  case TokenType::R_BRACKET: {
+    if (_openStack.top() != TokenType::L_BRACKET) {
+      throwTokenError(_current, "R-Bracket has no L-Bracket");
+    }
+    _openStack.pop();
+    break;
+  }
+  }
 }
 
 void CSTree::isFor() {
