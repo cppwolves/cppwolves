@@ -4,9 +4,10 @@
 procedure main(void) {
     int counter;
 
-    for (i = 0; i < 5; i++)
+    for (i = 0; i + 1 > 5; i++) {
+    }
 
-        counter = 2;
+    counter = 2;
     /*
       counter = 100;
     */

@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "token.hpp"
+#include "token_enum.hpp"
 #include "token_node.hpp"
 
 class CSTree {
@@ -25,7 +26,14 @@ class CSTree {
 
     bool isInitializationExpression();
     bool isBooleanExpression();
+    bool isNumericalExpression();
     bool isExpression();
+
+   private:
+    bool isOperand(TokenNode* token);
+
+   private:
+    bool _operandFlag;
 };
 
 #endif  // CSTREE_HPP
