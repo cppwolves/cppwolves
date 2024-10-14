@@ -1,28 +1,40 @@
-procedure -> procedure -> main -> ( -> void -> ) -> NULL
-                                               |
-                                               v
-                                               { -> NULL
-                                               |
-                                               v
-                                               int -> counter -> ; -> NULL
-                                                                 |
-                                                                 v
-                                                                 for -> ( -> i -> = -> 0 -> ; -> i -> + -> 1 -> > -> 5 -> ; -> i -> + -> + -> ) -> NULL
-                                                                                                                                              |
-                                                                                                                                              v
-                                                                                                                                              { -> NULL
-                                                                                                                                              |
-                                                                                                                                              v
-                                                                                                                                              } -> NULL
-                                                                                                                                              |
-                                                                                                                                              v
-                                                                                                                                              counter -> = -> 2 -> ; -> NULL
-                                                                                                                                                                   |
-                                                                                                                                                                   v
-                                                                                                                                                                   printf -> ( -> " -> counter = %d\n -> " -> , -> counter -> ) -> ; -> NULL
-                                                                                                                                                                                                                                   |
-                                                                                                                                                                                                                                   v
-                                                                                                                                                                                                                                   } -> NULL
-                                                                                                                                                                                                                                   |
-                                                                                                                                                                                                                                   v
-                                                                                                                                                                                                                                   NULL
+procedure -> main -> ( -> void -> ) -> NULL
+                                  |
+                                  v
+                                  { -> NULL
+                                  |
+                                  v
+                                  if -> ( -> ! -> ( -> ( -> ( -> TRUE -> ) -> && -> ! -> FALSE -> ) -> ) -> ) -> NULL
+                                                                                                            |
+                                                                                                            v
+                                                                                                            { -> NULL
+                                                                                                            |
+                                                                                                            v
+                                                                                                            return -> ; -> NULL
+                                                                                                                      |
+                                                                                                                      v
+                                                                                                                      } -> NULL
+                                                                                                                      |
+                                                                                                                      v
+                                                                                                                      int -> [ -> ] -> counter -> = -> [ -> 0 -> , -> 0 -> , -> 0 -> , -> 0 -> , -> 0 -> ] -> ; -> NULL
+                                                                                                                                                                                                              |
+                                                                                                                                                                                                              v
+                                                                                                                                                                                                              for -> ( -> i -> = -> 0 -> ; -> i -> + -> 1 -> > -> 5 -> ; -> i -> + -> + -> ) -> NULL
+                                                                                                                                                                                                                                                                                           |
+                                                                                                                                                                                                                                                                                           v
+                                                                                                                                                                                                                                                                                           { -> NULL
+                                                                                                                                                                                                                                                                                           |
+                                                                                                                                                                                                                                                                                           v
+                                                                                                                                                                                                                                                                                           } -> NULL
+                                                                                                                                                                                                                                                                                           |
+                                                                                                                                                                                                                                                                                           v
+                                                                                                                                                                                                                                                                                           counter -> [ -> i -> ] -> = -> i -> + -> + -> ; -> NULL
+                                                                                                                                                                                                                                                                                                                                         |
+                                                                                                                                                                                                                                                                                                                                         v
+                                                                                                                                                                                                                                                                                                                                         printf -> ( -> " -> counter = %d\n -> " -> , -> counter -> ) -> ; -> NULL
+                                                                                                                                                                                                                                                                                                                                                                                                         |
+                                                                                                                                                                                                                                                                                                                                                                                                         v
+                                                                                                                                                                                                                                                                                                                                                                                                         } -> NULL
+                                                                                                                                                                                                                                                                                                                                                                                                         |
+                                                                                                                                                                                                                                                                                                                                                                                                         v
+                                                                                                                                                                                                                                                                                                                                                                                                         NULL

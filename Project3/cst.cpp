@@ -15,7 +15,7 @@ CSTree::CSTree(std::vector<Token> &tokens) {
 
   _nIt = tokens.begin();
 
-  for (; _nIt != tokens.end(); ++_nIt) {
+  for (_nIt++; _nIt != tokens.end(); _nIt++) {
     // First, check the next node
     TokenNode *next = new TokenNode(*_nIt);
     switch (next->type) {

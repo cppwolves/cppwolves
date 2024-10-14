@@ -19,10 +19,106 @@ Token type: L_BRACE
 Token:      {
 
 Token type: IDENTIFIER
+Token:      if
+
+Token type: L_PAREN
+Token:      (
+
+Token type: BOOLEAN_NOT
+Token:      !
+
+Token type: L_PAREN
+Token:      (
+
+Token type: L_PAREN
+Token:      (
+
+Token type: L_PAREN
+Token:      (
+
+Token type: IDENTIFIER
+Token:      TRUE
+
+Token type: R_PAREN
+Token:      )
+
+Token type: BOOLEAN_AND
+Token:      &&
+
+Token type: BOOLEAN_NOT
+Token:      !
+
+Token type: IDENTIFIER
+Token:      FALSE
+
+Token type: R_PAREN
+Token:      )
+
+Token type: R_PAREN
+Token:      )
+
+Token type: R_PAREN
+Token:      )
+
+Token type: L_BRACE
+Token:      {
+
+Token type: IDENTIFIER
+Token:      return
+
+Token type: SEMICOLON
+Token:      ;
+
+Token type: R_BRACE
+Token:      }
+
+Token type: IDENTIFIER
 Token:      int
+
+Token type: L_BRACKET
+Token:      [
+
+Token type: R_BRACKET
+Token:      ]
 
 Token type: IDENTIFIER
 Token:      counter
+
+Token type: ASSIGNMENT_OPERATOR
+Token:      =
+
+Token type: L_BRACKET
+Token:      [
+
+Token type: INTEGER
+Token:      0
+
+Token type: COMMA
+Token:      ,
+
+Token type: INTEGER
+Token:      0
+
+Token type: COMMA
+Token:      ,
+
+Token type: INTEGER
+Token:      0
+
+Token type: COMMA
+Token:      ,
+
+Token type: INTEGER
+Token:      0
+
+Token type: COMMA
+Token:      ,
+
+Token type: INTEGER
+Token:      0
+
+Token type: R_BRACKET
+Token:      ]
 
 Token type: SEMICOLON
 Token:      ;
@@ -84,11 +180,26 @@ Token:      }
 Token type: IDENTIFIER
 Token:      counter
 
+Token type: L_BRACKET
+Token:      [
+
+Token type: IDENTIFIER
+Token:      i
+
+Token type: R_BRACKET
+Token:      ]
+
 Token type: ASSIGNMENT_OPERATOR
 Token:      =
 
-Token type: INTEGER
-Token:      2
+Token type: IDENTIFIER
+Token:      i
+
+Token type: PLUS
+Token:      +
+
+Token type: PLUS
+Token:      +
 
 Token type: SEMICOLON
 Token:      ;
