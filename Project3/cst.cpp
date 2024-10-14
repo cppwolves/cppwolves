@@ -36,6 +36,8 @@ CSTree::CSTree(std::vector<Token> &tokens) {
         isFor();
         break;
       }
+      case TokenType::L_BRACE:
+      case TokenType::R_BRACE:
       case TokenType::ELSE:
       case TokenType::SEMICOLON: {
         addChildAndAdvance(next);
