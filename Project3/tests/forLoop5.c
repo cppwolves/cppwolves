@@ -6,12 +6,12 @@ procedure main(void) {
         return;
     }
 
-    int counter;
+    int[] counter = [0,0,0,0,0];
 
     for (i = 0; i + 1 > 5; i++) {
     }
     
-    counter = 2;
+    counter[i] = i++;
     /*
       counter = 100;
     */

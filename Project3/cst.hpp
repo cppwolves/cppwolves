@@ -32,6 +32,7 @@ private:
 
 private:
   bool isOperand(TokenNode *token);
+   void throwTokenError(TokenNode* node, const std::string& message);
 
 private:
   bool _operandFlag;

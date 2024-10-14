@@ -1,8 +1,6 @@
 #include "cst.hpp"
 #include "token_enum.hpp"
 #include "token_node.hpp"
-#include <algorithm>
-#include <functional>
 #include <iostream>
 #include <stdexcept>
 
@@ -18,26 +16,40 @@ CSTree::CSTree(std::vector<Token> &tokens) {
   _nIt = tokens.begin();
 
   for (_nIt++; _nIt != tokens.end(); _nIt++) {
+    switch (_current->type) {
+    case TokenType::L_BRACE: {
+      _openStack.push(TokenType::L_BRACE);
+      break;
+    }
+    case TokenType::L_PAREN: {
+      _openStack.push(TokenType::L_PAREN);
+      break;
+    }
+    case TokenType::R_PAREN: {
+      if (_openStack.top() != TokenType::L_PAREN) {
+        throwTokenError(_current, "R-Paren has no L-Paren");
+      }
+      _openStack.pop();
+      break;
+    }
+    case TokenType::L_BRACKET: {
+      _openStack.push(TokenType::L_BRACKET);
+      break;
+    }
+    case TokenType::R_BRACKET: {
+      if (_openStack.top() != TokenType::L_BRACKET) {
+        throwTokenError(_current, "R-Bracket has no L-Bracket");
+      }
+      _openStack.pop();
+      break;
+    }
+    }
     // First, check the next node
     TokenNode *next = new TokenNode(*_nIt);
     switch (next->type) {
     // The next token is a delimiter
-    case TokenType::L_BRACE: {
-      _openStack.push(TokenType::L_BRACE);
-      std::cout << "Pushed L_BRACE\n";
-      addChildAndAdvance(next);
-      break;
-    }
-    case TokenType::R_BRACE: {
-      if (_openStack.top() != TokenType::L_BRACE) {
-        throw std::runtime_error("[line " + std::to_string(next->lineNumber) +
-                                 "] " + "R-Brace has no L-Brace");
-      }
-      _openStack.pop();
-      std::cout << "Popped L_BRACE\n";
-      addChildAndAdvance(next);
-      break;
-    }
+    case TokenType::L_BRACE:
+    case TokenType::R_BRACE:
     case TokenType::ELSE:
     case TokenType::SEMICOLON: {
       addChildAndAdvance(next);
@@ -50,47 +62,15 @@ CSTree::CSTree(std::vector<Token> &tokens) {
         isFor();
         break;
       }
-      case TokenType::L_BRACE:
-        _openStack.push(TokenType::L_BRACE);
-        std::cout << "Pushed L_BRACE\n";
       case TokenType::ELSE:
       case TokenType::SEMICOLON: {
         addChildAndAdvance(next);
         break;
       }
-      case TokenType::L_PAREN: {
-        _openStack.push(TokenType::L_PAREN);
-        std::cout << "Pushed L_PAREN\n";
+      default: {
         addSiblingAndAdvance(next);
         break;
       }
-      case TokenType::R_PAREN: {
-        if (_openStack.top() != TokenType::L_PAREN) {
-          throw std::runtime_error("R-Paren has no L-Paren");
-        }
-        _openStack.pop();
-        std::cout << "Popped L_PAREN\n";
-        addSiblingAndAdvance(next);
-        break;
-      }
-      case TokenType::L_BRACKET: {
-        _openStack.push(TokenType::L_BRACKET);
-        std::cout << "Pushed L_BRACKET\n";
-        addSiblingAndAdvance(next);
-        break;
-      }
-      case TokenType::R_BRACKET: {
-        if (_openStack.top() != TokenType::L_BRACKET) {
-          throw std::runtime_error("R-Bracket has no L-Bracket");
-        }
-        _openStack.pop();
-        std::cout << "Popped L_BRACKET\n";
-        addChildAndAdvance(next);
-        break;
-      }
-      default:
-        addSiblingAndAdvance(next);
-        break;
       }
     }
   }
@@ -106,58 +86,63 @@ void CSTree::addChildAndAdvance(TokenNode *node) {
   _current = node;
 }
 
+void CSTree::throwTokenError(TokenNode *node, const std::string &message) {
+  throw std::runtime_error("[line " + std::to_string(node->lineNumber) +
+                           "]: " + message);
+}
+
 void CSTree::isFor() {
   try {
     TokenNode *lParen = new TokenNode(*_nIt++);
 
     if (lParen->type != TokenType::L_PAREN) {
-      throw std::runtime_error("Missing L-Paren");
+      throwTokenError(lParen, "Missing L-Paren");
     }
 
     _openStack.push(TokenType::L_PAREN);
-    std::cout << "Pushed L_PAREN\n";
 
     addSiblingAndAdvance(lParen);
 
     if (!isInitializationExpression()) {
-      throw std::runtime_error("Missing initialization expression");
+      throwTokenError(lParen, "Missing initialization expression");
     }
 
     TokenNode *semiColon = new TokenNode(*_nIt++);
     if (semiColon->type != TokenType::SEMICOLON) {
-      throw std::runtime_error("Missing semicolon");
+      throwTokenError(semiColon, "Missing semicolon");
     }
 
     addSiblingAndAdvance(semiColon);
     if (!isBooleanExpression()) {
-      throw std::runtime_error("Missing boolean expression");
+      throwTokenError(semiColon, "Missing boolean expression");
     }
 
     TokenNode *semiColon2 = new TokenNode(*_nIt++);
     if (semiColon2->type != TokenType::SEMICOLON) {
-      throw std::runtime_error("Missing semicolon");
+      throwTokenError(semiColon2, "Missing semicolon");
     }
 
     addSiblingAndAdvance(semiColon2);
 
     if (!isNumericalExpression()) {
-      throw std::runtime_error("Missing expression");
+      throwTokenError(semiColon2, "Missing expression");
     }
 
     TokenNode *rParen = new TokenNode(*_nIt++);
     if (rParen->type != TokenType::R_PAREN) {
-      throw std::runtime_error("Missing R-Paren");
+      throwTokenError(rParen, "Missing R-Paren");
     }
     if (_openStack.top() != TokenType::L_PAREN) {
-      throw std::runtime_error("R-Paren has no L-Paren");
+      throwTokenError(rParen, "R-Paren has no L-Paren");
     }
 
-    _openStack.pop();
-    std::cout << "Popped L_PAREN\n";
+    // This will be taken care of when the function returns
+    // _openStack.pop();
+    // std::cout << "Popped L_PAREN\n";
 
     addSiblingAndAdvance(rParen);
   } catch (const std::exception &ex) {
-    std::cout << "malformed for loop: " << ex.what() << std::endl;
+    std::cerr << "malformed for loop: " << ex.what() << std::endl;
     exit(1);
   }
 }
@@ -172,7 +157,7 @@ bool CSTree::isInitializationExpression() {
     TokenNode *identifier = new TokenNode(*_nIt++);
 
     if (identifier->getTypeName() != "IDENTIFIER") {
-      throw std::runtime_error("Missing indentifier");
+      throwTokenError(identifier, "Missing indentifier");
     }
 
     addSiblingAndAdvance(identifier);
@@ -180,10 +165,9 @@ bool CSTree::isInitializationExpression() {
     // followed by assignment operator
     TokenNode *assignmentOp = new TokenNode(*_nIt++);
     if (assignmentOp->type != TokenType::ASSIGNMENT_OPERATOR) {
-      throw std::runtime_error("Missing assignment operator");
+      throwTokenError(assignmentOp, "Missing assignment operator");
     }
 
-    ;
     addSiblingAndAdvance(assignmentOp);
 
     // can be string OR expression
@@ -203,7 +187,7 @@ bool CSTree::isInitializationExpression() {
     return true;
 
   } catch (const std::exception &ex) {
-    std::cout << "malformed initialization expression: " << ex.what()
+    std::cerr << "malformed initialization expression: " << ex.what()
               << std::endl;
     exit(1);
   }
@@ -224,13 +208,13 @@ bool CSTree::isBooleanExpression() {
       if (!isRelationalOperator(
               next->type)) { // redundent check maybe, play around with fixing
                              // the if conditions
-        throw std::runtime_error("Expected relational operator");
+        throwTokenError(next, "Expected relational operator");
       }
 
       addSiblingAndAdvance(next);
 
       if (!isNumericalExpression()) {
-        throw std::runtime_error("Expected numerical expression");
+        throwTokenError(next, "Expected numerical expression");
       }
       return true;
     } else {
@@ -258,7 +242,7 @@ bool CSTree::isBooleanExpression() {
 
           addSiblingAndAdvance(second);
           if (!isBooleanExpression()) {
-            throw std::runtime_error("Expected boolean expression");
+            throwTokenError(second, "Expected boolean expression");
           }
           return true;
         }
@@ -274,7 +258,6 @@ bool CSTree::isBooleanExpression() {
         // L-Paren & identifier & boolean op & boolean expression (recursion)
         // & R-Paren
         _openStack.push(TokenType::L_PAREN);
-        std::cout << "Pushed L_PAREN\n";
 
         // add L-Paren to tree
 
@@ -282,7 +265,7 @@ bool CSTree::isBooleanExpression() {
 
         TokenNode *next = new TokenNode(*_nIt++);
         if (next->type != TokenType::IDENTIFIER) {
-          throw std::runtime_error("Expected identifier");
+          throwTokenError(next, "Expected identifier");
         }
 
         // add identifier to tree
@@ -291,7 +274,7 @@ bool CSTree::isBooleanExpression() {
 
         TokenNode *boolOp = new TokenNode(*_nIt++);
         if (!isBooleanOperator(boolOp->type)) {
-          throw std::runtime_error("Expected boolean operator");
+          throwTokenError(boolOp, "Expected boolean operator");
         }
 
         // add boolean operator to tree
@@ -300,18 +283,17 @@ bool CSTree::isBooleanExpression() {
 
         // handles inner boolean expression itself
         if (!isBooleanExpression()) {
-          throw std::runtime_error("Expected boolean expression");
+          throwTokenError(boolOp, "Expected boolean expression");
         }
 
         next = new TokenNode(*_nIt++);
         if (next->type != TokenType::R_PAREN) {
-          throw std::runtime_error("Expected R-Paren");
+          throwTokenError(next, "Expected R-Paren");
         }
         if (_openStack.top() != TokenType::L_PAREN) {
-          throw std::runtime_error("R-Paren has no L-Paren");
+          throwTokenError(next, "R-Paren has no L-Paren");
         }
         _openStack.pop();
-        std::cout << "Popped L_PAREN\n";
 
         // add R-Paren to tree
         addSiblingAndAdvance(next);
@@ -327,7 +309,7 @@ bool CSTree::isBooleanExpression() {
       return false;
     }
   } catch (const std::exception &ex) {
-    std::cout << "malformed boolean expression: " << ex.what() << std::endl;
+    std::cerr << "malformed boolean expression: " << ex.what() << std::endl;
     exit(1);
   }
 }
@@ -355,25 +337,23 @@ bool CSTree::isNumericalExpression() {
       if (next->type == TokenType::L_PAREN) {
         // operand + operator + L-Paren + numExp + R-Paren
         _openStack.push(TokenType::L_PAREN);
-        std::cout << "Pushed L_PAREN\n";
 
         // add L-Paren to tree
 
         addSiblingAndAdvance(next);
 
         if (!isNumericalExpression()) {
-          throw std::runtime_error("Expected numerical expression");
+          throwTokenError(next, "Expected numerical expression");
         }
 
         next = new TokenNode(*_nIt++);
         if (next->type != TokenType::R_PAREN) {
-          throw std::runtime_error("Missing R-Paren");
+          throwTokenError(next, "Missing R-Paren");
         }
         if (_openStack.top() != TokenType::L_PAREN) {
-          throw std::runtime_error("R-Paren has no L-Paren");
+          throwTokenError(next, "R-Paren has no L-Paren");
         }
         _openStack.pop();
-        std::cout << "Popped L_PAREN\n";
 
         // add R-Paren to tree
         addSiblingAndAdvance(next);
@@ -386,7 +366,7 @@ bool CSTree::isNumericalExpression() {
         delete next;
 
         if (!isNumericalExpression()) {
-          throw std::runtime_error("Expected numerical expression");
+          throwTokenError(first, "Expected numerical expression");
         }
         _operandFlag = false;
         return true;
@@ -398,7 +378,7 @@ bool CSTree::isNumericalExpression() {
         addSiblingAndAdvance(next);
         TokenNode *plus = new TokenNode(*_nIt++);
         if (plus->type != TokenType::PLUS) {
-          throw std::runtime_error("Expected plus operator");
+          throwTokenError(plus, "Expected plus operator");
         }
 
         addSiblingAndAdvance(plus);
@@ -409,7 +389,7 @@ bool CSTree::isNumericalExpression() {
         addSiblingAndAdvance(next);
         TokenNode *minus = new TokenNode(*_nIt++);
         if (minus->type != TokenType::MINUS) {
-          throw std::runtime_error("Expected minus operator");
+          throwTokenError(minus, "Expected minus operator");
         }
 
         addSiblingAndAdvance(minus);
@@ -437,23 +417,21 @@ bool CSTree::isNumericalExpression() {
       // operator numExp
 
       _openStack.push(TokenType::L_PAREN);
-      std::cout << "Pushed L_PAREN\n";
 
       addSiblingAndAdvance(first);
 
       if (!isNumericalExpression()) {
-        throw std::runtime_error("Expected numerical expression");
+        throwTokenError(first, "Expected numerical expression");
       }
 
       TokenNode *next = new TokenNode(*_nIt++);
       if (next->type != TokenType::R_PAREN) {
-        throw std::runtime_error("Missing R-Paren");
+        throwTokenError(next, "Missing R-Paren");
       }
       if (_openStack.top() != TokenType::L_PAREN) {
-        throw std::runtime_error("R-Paren has no L-Paren");
+        throwTokenError(next, "R-Paren has no L-Paren");
       }
       _openStack.pop();
-      std::cout << "Popped L_PAREN\n";
 
       addSiblingAndAdvance(next);
       return true;
@@ -463,14 +441,14 @@ bool CSTree::isNumericalExpression() {
       addSiblingAndAdvance(first);
       TokenNode *plus = new TokenNode(*_nIt++);
       if (plus->type != TokenType::PLUS) {
-        throw std::runtime_error("Expected plus operator");
+        throwTokenError(plus, "Expected plus operator");
       }
 
       addSiblingAndAdvance(plus);
 
       TokenNode *identifier = new TokenNode(*_nIt++);
       if (identifier->getTypeName() != "IDENTIFIER") {
-        throw std::runtime_error("Expected identifier");
+        throwTokenError(identifier, "Expected identifier");
       }
 
       addSiblingAndAdvance(identifier);
@@ -481,19 +459,19 @@ bool CSTree::isNumericalExpression() {
       addSiblingAndAdvance(first);
       TokenNode *minus = new TokenNode(*_nIt++);
       if (minus->type != TokenType::MINUS) {
-        throw std::runtime_error("Expected minus operator");
+        throwTokenError(minus, "Expected minus operator");
       }
       addSiblingAndAdvance(minus);
 
       TokenNode *identifier = new TokenNode(*_nIt++);
       if (identifier->getTypeName() != "IDENTIFIER") {
-        throw std::runtime_error("Expected identifier");
+        throwTokenError(identifier, "Expected identifier");
       }
       addSiblingAndAdvance(identifier);
       return true;
     }
     default:
-      throw std::runtime_error("not numExp");
+      throwTokenError(first, "not numExp");
     }
   }
   // for testing

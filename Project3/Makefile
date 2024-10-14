@@ -1,6 +1,6 @@
 # Compiler and flags
 CXX = g++
-CXXFLAGS = -std=c++17
+CXXFLAGS = -std=c++17 -g
 
 # Output executable
 TARGET = program.exe
