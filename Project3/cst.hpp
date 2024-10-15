@@ -33,7 +33,7 @@ private:
   bool isExpression();
 
 private:
-  void handleOpenCloseDelimiters(TokenNode *node);
+  void handleOpenCloseDelimiters();
   bool isOperand(TokenNode *token);
   void throwTokenError(TokenNode *node, const std::string &message);
   void revertState(TokenNode* node);
