@@ -35,7 +35,7 @@ class CSTree {
     bool isParameterList();
 
    private:
-    void handleOpenCloseDelimiters();
+    void handleOpenCloseDelimiters(TokenNode *node);
     bool isOperand(TokenNode *token);
     void throwTokenError(TokenNode *node, const std::string &message);
     void revertState(TokenNode *node);
