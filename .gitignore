@@ -7,3 +7,8 @@
 /**/TestFiles/
 /**/files/
 /**/*.zip
+
+
+/**/tokens_output.txt
+/**/cst_output.txt
+/**/program_output.txt

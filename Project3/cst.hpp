@@ -9,38 +9,40 @@
 #include "token_node.hpp"
 
 class CSTree {
-public:
-  CSTree(std::vector<Token> &tokens);
-  TokenNode *head() { return _head; }
+   public:
+    CSTree(std::vector<Token> &tokens);
+    TokenNode *head() { return _head; }
 
-private:
-  TokenNode *_head;
+   private:
+    TokenNode *_head;
 
-  TokenNode *_previous;
-  TokenNode *_current;
+    TokenNode *_previous;
+    TokenNode *_current;
 
-  std::vector<Token>::iterator _nIt;
+    std::vector<Token>::iterator _nIt;
 
-private:
-  void isFor();
-  void isWhile();
-  void addSiblingAndAdvance(TokenNode *node);
-  void addChildAndAdvance(TokenNode *node);
+   private:
+    void isFor();
+    void isWhile();
+    void isFunction();
+    void addSiblingAndAdvance(TokenNode *node);
+    void addChildAndAdvance(TokenNode *node);
 
-  bool isInitializationExpression();
-  bool isBooleanExpression();
-  bool isNumericalExpression();
-  bool isExpression();
+    bool isInitializationExpression();
+    bool isBooleanExpression();
+    bool isNumericalExpression();
+    bool isExpression();
+    bool isParameterList();
 
-private:
-  void handleOpenCloseDelimiters();
-  bool isOperand(TokenNode *token);
-  void throwTokenError(TokenNode *node, const std::string &message);
-  void revertState(TokenNode* node);
+   private:
+    void handleOpenCloseDelimiters();
+    bool isOperand(TokenNode *token);
+    void throwTokenError(TokenNode *node, const std::string &message);
+    void revertState(TokenNode *node);
 
-private:
-  bool _operandFlag;
-  std::stack<TokenType> _openStack{};
+   private:
+    bool _operandFlag;
+    std::stack<TokenType> _openStack{};
 };
 
-#endif // CSTREE_HPP
+#endif  // CSTREE_HPP
