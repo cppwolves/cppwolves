@@ -19,34 +19,37 @@ Token type: L_BRACE
 Token:      {
 
 Token type: IDENTIFIER
-Token:      if
+Token:      int
 
-Token type: L_PAREN
-Token:      (
+Token type: IDENTIFIER
+Token:      counter
 
-Token type: BOOLEAN_NOT
-Token:      !
+Token type: SEMICOLON
+Token:      ;
 
-Token type: L_PAREN
-Token:      (
-
-Token type: L_PAREN
-Token:      (
+Token type: IDENTIFIER
+Token:      while
 
 Token type: L_PAREN
 Token:      (
 
 Token type: IDENTIFIER
-Token:      TRUE
+Token:      count
 
-Token type: R_PAREN
-Token:      )
+Token type: BOOLEAN_NOT_EQUAL
+Token:      !=
+
+Token type: INTEGER
+Token:      0
 
 Token type: BOOLEAN_AND
 Token:      &&
 
-Token type: BOOLEAN_NOT
-Token:      !
+Token type: IDENTIFIER
+Token:      something
+
+Token type: BOOLEAN_EQUAL
+Token:      ==
 
 Token type: IDENTIFIER
 Token:      FALSE
@@ -54,123 +57,6 @@ Token:      FALSE
 Token type: R_PAREN
 Token:      )
 
-Token type: R_PAREN
-Token:      )
-
-Token type: R_PAREN
-Token:      )
-
-Token type: L_BRACE
-Token:      {
-
-Token type: IDENTIFIER
-Token:      return
-
-Token type: SEMICOLON
-Token:      ;
-
-Token type: R_BRACE
-Token:      }
-
-Token type: IDENTIFIER
-Token:      int
-
-Token type: L_BRACKET
-Token:      [
-
-Token type: R_BRACKET
-Token:      ]
-
-Token type: IDENTIFIER
-Token:      counter
-
-Token type: ASSIGNMENT_OPERATOR
-Token:      =
-
-Token type: L_BRACKET
-Token:      [
-
-Token type: INTEGER
-Token:      0
-
-Token type: COMMA
-Token:      ,
-
-Token type: INTEGER
-Token:      0
-
-Token type: COMMA
-Token:      ,
-
-Token type: INTEGER
-Token:      0
-
-Token type: COMMA
-Token:      ,
-
-Token type: INTEGER
-Token:      0
-
-Token type: COMMA
-Token:      ,
-
-Token type: INTEGER
-Token:      0
-
-Token type: R_BRACKET
-Token:      ]
-
-Token type: SEMICOLON
-Token:      ;
-
-Token type: IDENTIFIER
-Token:      for
-
-Token type: L_PAREN
-Token:      (
-
-Token type: IDENTIFIER
-Token:      i
-
-Token type: ASSIGNMENT_OPERATOR
-Token:      =
-
-Token type: INTEGER
-Token:      0
-
-Token type: SEMICOLON
-Token:      ;
-
-Token type: IDENTIFIER
-Token:      i
-
-Token type: PLUS
-Token:      +
-
-Token type: INTEGER
-Token:      1
-
-Token type: GT
-Token:      >
-
-Token type: INTEGER
-Token:      5
-
-Token type: SEMICOLON
-Token:      ;
-
-Token type: IDENTIFIER
-Token:      i
-
-Token type: PLUS
-Token:      +
-
-Token type: PLUS
-Token:      +
-
-Token type: R_PAREN
-Token:      )
-
 Token type: L_BRACE
 Token:      {
 
@@ -180,26 +66,11 @@ Token:      }
 Token type: IDENTIFIER
 Token:      counter
 
-Token type: L_BRACKET
-Token:      [
-
-Token type: IDENTIFIER
-Token:      i
-
-Token type: R_BRACKET
-Token:      ]
-
 Token type: ASSIGNMENT_OPERATOR
 Token:      =
 
-Token type: IDENTIFIER
-Token:      i
-
-Token type: PLUS
-Token:      +
-
-Token type: PLUS
-Token:      +
+Token type: INTEGER
+Token:      2
 
 Token type: SEMICOLON
 Token:      ;

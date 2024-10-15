@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "token.hpp"
+#include "token_enum.hpp"
 #include "token_node.hpp"
 
 class CSTree {
@@ -22,6 +23,7 @@ private:
 
 private:
   void isFor();
+  void isWhile();
   void addSiblingAndAdvance(TokenNode *node);
   void addChildAndAdvance(TokenNode *node);
 
@@ -34,6 +36,7 @@ private:
   void handleOpenCloseDelimiters();
   bool isOperand(TokenNode *token);
   void throwTokenError(TokenNode *node, const std::string &message);
+  void revertState(TokenNode* node);
 
 private:
   bool _operandFlag;

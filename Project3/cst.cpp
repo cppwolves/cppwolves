@@ -35,6 +35,10 @@ CSTree::CSTree(std::vector<Token> &tokens) {
         isFor();
         break;
       }
+      case TokenType::WHILE: {
+        isWhile();
+        break;
+      }
       case TokenType::L_BRACE:
       case TokenType::R_BRACE:
       case TokenType::ELSE:
@@ -153,6 +157,35 @@ void CSTree::isFor() {
   }
 }
 
+void CSTree::isWhile() {
+  try {
+    TokenNode *lParen = new TokenNode(*_nIt++);
+
+    if (lParen->type != TokenType::L_PAREN) {
+      throwTokenError(lParen, "Missing L-Paren");
+    }
+
+    addSiblingAndAdvance(lParen);
+
+    if (!isBooleanExpression()) {
+      throwTokenError(lParen, "Missing boolean expression");
+    }
+
+    TokenNode *rParen = new TokenNode(*_nIt);
+    if (rParen->type != TokenType::R_PAREN) {
+      throwTokenError(rParen, "Missing R-Paren");
+    }
+    if (_openStack.top() != TokenType::L_PAREN) {
+      throwTokenError(rParen, "R-Paren has no L-Paren");
+    }
+
+    addSiblingAndAdvance(rParen);
+  } catch (const std::exception &ex) {
+    std::cerr << "malformed for loop: " << ex.what() << std::endl;
+    exit(1);
+  }
+}
+
 bool CSTree::isInitializationExpression() {
   try {
     // needs to handle (INT, CHAR, DATATYPE, etc before checking identifier)
@@ -207,27 +240,25 @@ bool CSTree::isBooleanExpression() {
     // check if single operand,
     // if true AND next token isnt relational op - switch to boolExp case
     // checks
-    isNumericalExpression();
-    TokenNode *next = new TokenNode(*_nIt++);
 
-    if (!_operandFlag || (_operandFlag && isRelationalOperator(next->type))) {
-      if (!isRelationalOperator(
-              next->type)) { // redundent check maybe, play around with fixing
-                             // the if conditions
-        throwTokenError(next, "Expected relational operator");
-      }
+    if (isNumericalExpression() &&
+        (!_operandFlag ||
+         (_operandFlag && isRelationalOperator((*_nIt).type)))) {
+      TokenNode *next = new TokenNode(*_nIt++);
 
       addSiblingAndAdvance(next);
 
-      if (!isNumericalExpression()) {
+      if (!isNumericalExpression() && !isBooleanExpression()) {
         throwTokenError(next, "Expected numerical expression");
+      }
+      if (isBooleanOperator((*_nIt).type)) {
+        addSiblingAndAdvance(new TokenNode(*_nIt++));
+        return isBooleanExpression();
       }
       return true;
     } else {
       // clear tree of num, fix this mess
-      delete _current;
-      _current = holderNode;
-      _nIt = holderIt;
+      revertState(holderNode);
       TokenNode *first = new TokenNode(*_nIt++);
 
       switch (first->type) {
@@ -310,6 +341,8 @@ bool CSTree::isBooleanExpression() {
         // numerical expression & boolean relational expression & numerical
         // expression not handled here anymore, but whats the default case?
         // error? or return false maybe
+        revertState(holderNode);
+        return false;
       }
       }
       return false;
@@ -321,6 +354,9 @@ bool CSTree::isBooleanExpression() {
 }
 
 bool CSTree::isNumericalExpression() {
+  TokenNode *holderNode = _current;
+  auto holderIt = _nIt;
+
   // make flag relevant to deepest call unless set at top level
   _operandFlag = false;
 
@@ -477,12 +513,30 @@ bool CSTree::isNumericalExpression() {
       return true;
     }
     default:
-      throwTokenError(first, "not numExp");
+      revertState(holderNode);
+      return false;
+      // throwTokenError(first, "not numExp");
     }
   }
   // for testing
   throw std::runtime_error("not numExp");
   return true;
+}
+
+void CSTree::revertState(TokenNode *node) {
+  _current = node;
+
+  node = node->sibling ? node->sibling : node->child;
+  while (node) {
+    TokenNode *tempNode = node;
+    if (tempNode->sibling) {
+      node = tempNode->sibling;
+    } else {
+      node = tempNode->child;
+    }
+    delete tempNode;
+    _nIt--;
+  }
 }
 
 bool CSTree::isExpression() {

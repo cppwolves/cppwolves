@@ -4,6 +4,7 @@ procedure -> main -> ( -> void -> ) -> NULL
                                   { -> NULL
                                   |
                                   v
+<<<<<<< Updated upstream
                                   if -> ( -> ! -> ( -> ( -> ( -> TRUE -> ) -> && -> ! -> FALSE -> ) -> ) -> ) -> NULL
                                                                                                             |
                                                                                                             v
@@ -35,3 +36,27 @@ procedure -> main -> ( -> void -> ) -> NULL
                                                                                                                                                                                                                                                                                                                                                                                                          |
                                                                                                                                                                                                                                                                                                                                                                                                          v
                                                                                                                                                                                                                                                                                                                                                                                                          NULL
+=======
+                                  int -> counter -> ; -> NULL
+                                                    |
+                                                    v
+                                                    while -> ( -> count -> != -> 0 -> && -> something -> FALSE -> ) -> NULL
+                                                                                                                  |
+                                                                                                                  v
+                                                                                                                  { -> NULL
+                                                                                                                  |
+                                                                                                                  v
+                                                                                                                  } -> NULL
+                                                                                                                  |
+                                                                                                                  v
+                                                                                                                  counter -> = -> 2 -> ; -> NULL
+                                                                                                                                       |
+                                                                                                                                       v
+                                                                                                                                       printf -> ( -> " -> counter = %d\n -> " -> , -> counter -> ) -> ; -> NULL
+                                                                                                                                                                                                       |
+                                                                                                                                                                                                       v
+                                                                                                                                                                                                       } -> NULL
+                                                                                                                                                                                                       |
+                                                                                                                                                                                                       v
+                                                                                                                                                                                                       NULL
+>>>>>>> Stashed changes
