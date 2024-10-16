@@ -400,12 +400,19 @@ bool CSTree::isNumericalExpression() {
         // add R-Paren to tree
         addSiblingAndAdvance(next);
         return true;
-
       } else {
         // operand + operator + numExp
         // unget last token, to be valid this must be a new NumExp
+        TokenType nextType = _nIt->type;
         _nIt--;
         delete next;
+
+        // operand + relationalOp + operand
+        if (isRelationalOperator(nextType)) {
+          addSiblingAndAdvance(new TokenNode(*_nIt++));
+          _operandFlag = true;
+          return false;
+        }
 
         if (!isNumericalExpression()) {
           throwTokenError(first, "Expected numerical expression");
