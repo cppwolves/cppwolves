@@ -36,6 +36,7 @@ class CSTree {
     bool isNumericalExpression();
     bool isExpression();
     bool isParameterList();
+    bool isIdentifierList();  // and arrays
 
    private:
     void handleOpenCloseDelimiters(TokenNode *node);
@@ -47,6 +48,7 @@ class CSTree {
     bool _operandFlag;
     bool _chainCheck;
     bool _paramCheck;
+    bool _identifierListCheck;
     std::stack<TokenType> _openStack{};
 };
 
