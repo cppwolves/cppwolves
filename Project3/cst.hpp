@@ -48,7 +48,6 @@ class CSTree {
     bool _operandFlag;
     bool _chainCheck;
     bool _paramCheck;
-    bool _identifierListCheck;
     std::stack<TokenType> _openStack{};
 };
 
