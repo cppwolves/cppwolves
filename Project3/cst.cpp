@@ -1,10 +1,8 @@
 #include "cst.hpp"
 
-#include <iostream>
-#include <stdexcept>
-
 #include "token_enum.hpp"
 #include "token_node.hpp"
+#include "token_error.hpp"
 
 CSTree::CSTree(std::vector<Token> &tokens) {
   if (tokens.empty()) {
@@ -113,243 +111,221 @@ void CSTree::handleOpenCloseDelimiters(TokenNode *node) {
 }
 
 void CSTree::isFor() {
-  try {
-    TokenNode *lParen = new TokenNode(*_nIt++);
+  TokenNode *lParen = new TokenNode(*_nIt++);
 
-    if (lParen->type != TokenType::L_PAREN) {
-      throwMissingOpeningParenthesisError(lParen);
-    }
-
-    addSiblingAndAdvance(lParen);
-
-    if (!isInitializationExpression()) {
-      throwMissingInitializationExpressionError(lParen);
-    }
-
-    TokenNode *semiColon = new TokenNode(*_nIt++);
-    if (semiColon->type != TokenType::SEMICOLON) {
-      throwMissingSemicolonError(semiColon);
-    }
-
-    addSiblingAndAdvance(semiColon);
-    if (!isBooleanExpression()) {
-      throwMissingBooleanExpressionError(semiColon);
-    }
-
-    TokenNode *semiColon2 = new TokenNode(*_nIt++);
-    if (semiColon2->type != TokenType::SEMICOLON) {
-      throwMissingSemicolonError(semiColon2);
-    }
-
-    addSiblingAndAdvance(semiColon2);
-
-    if (!isNumericalExpression()) {
-      throwMissingNumericalExpressionError(semiColon2);
-    }
-
-    TokenNode *rParen = new TokenNode(*_nIt);
-    if (rParen->type != TokenType::R_PAREN) {
-      throwMissingClosingParenthesisError(rParen);
-    }
-    if (_openStack.top() != TokenType::L_PAREN) {
-      throwMissingClosingParenthesisError(rParen);
-    }
-
-    addSiblingAndAdvance(rParen);
-  } catch (const std::exception &ex) {
-    std::cerr << "malformed for loop: " << ex.what() << std::endl;
-    exit(1);
+  if (lParen->type != TokenType::L_PAREN) {
+    throwMissingOpeningParenthesisError(lParen);
   }
+
+  addSiblingAndAdvance(lParen);
+
+  if (!isInitializationExpression()) {
+    throwMissingInitializationExpressionError(lParen);
+  }
+
+  TokenNode *semiColon = new TokenNode(*_nIt++);
+  if (semiColon->type != TokenType::SEMICOLON) {
+    throwMissingSemicolonError(semiColon);
+  }
+
+  addSiblingAndAdvance(semiColon);
+  if (!isBooleanExpression()) {
+    throwMissingBooleanExpressionError(semiColon);
+  }
+
+  TokenNode *semiColon2 = new TokenNode(*_nIt++);
+  if (semiColon2->type != TokenType::SEMICOLON) {
+    throwMissingSemicolonError(semiColon2);
+  }
+
+  addSiblingAndAdvance(semiColon2);
+
+  if (!isNumericalExpression()) {
+    throwMissingNumericalExpressionError(semiColon2);
+  }
+
+  TokenNode *rParen = new TokenNode(*_nIt);
+  if (rParen->type != TokenType::R_PAREN) {
+    throwMissingClosingParenthesisError(rParen);
+  }
+  if (_openStack.top() != TokenType::L_PAREN) {
+    throwMissingClosingParenthesisError(rParen);
+  }
+
+  addSiblingAndAdvance(rParen);
 }
 
 void CSTree::isWhile() {
-  try {
-    TokenNode *lParen = new TokenNode(*_nIt++);
+  TokenNode *lParen = new TokenNode(*_nIt++);
 
-    if (lParen->type != TokenType::L_PAREN) {
-      throwMissingOpeningParenthesisError(lParen);
-    }
-
-    addSiblingAndAdvance(lParen);
-
-    if (!isBooleanExpression()) {
-      throwMissingBooleanExpressionError(lParen);
-    }
-
-    TokenNode *rParen = new TokenNode(*_nIt);
-    if (rParen->type != TokenType::R_PAREN) {
-      throwMissingClosingParenthesisError(rParen);
-    }
-    if (_openStack.top() != TokenType::L_PAREN) {
-      throwMissingClosingParenthesisError(rParen);
-    }
-
-    addSiblingAndAdvance(rParen);
-  } catch (const std::exception &ex) {
-    std::cerr << "malformed for loop: " << ex.what() << std::endl;
-    exit(1);
+  if (lParen->type != TokenType::L_PAREN) {
+    throwMissingOpeningParenthesisError(lParen);
   }
+
+  addSiblingAndAdvance(lParen);
+
+  if (!isBooleanExpression()) {
+    throwMissingBooleanExpressionError(lParen);
+  }
+
+  TokenNode *rParen = new TokenNode(*_nIt);
+  if (rParen->type != TokenType::R_PAREN) {
+    throwMissingClosingParenthesisError(rParen);
+  }
+  if (_openStack.top() != TokenType::L_PAREN) {
+    throwMissingClosingParenthesisError(rParen);
+  }
+
+  addSiblingAndAdvance(rParen);
 }
 
 bool CSTree::isInitializationExpression() {
-  try {
-    // needs to handle (INT, CHAR, DATATYPE, etc before checking identifier)
-    // currently, does not
-    // should be before called? check BNF
+  // needs to handle (INT, CHAR, DATATYPE, etc before checking identifier)
+  // currently, does not
+  // should be before called? check BNF
 
-    // must start with identifier
-    TokenNode *identifier = new TokenNode(*_nIt++);
+  // must start with identifier
+  TokenNode *identifier = new TokenNode(*_nIt++);
 
-    if (identifier->getTypeName() != "IDENTIFIER") {
-      throwMissingIdentifierError(identifier);
-    }
-
-    addSiblingAndAdvance(identifier);
-
-    // followed by assignment operator
-    TokenNode *assignmentOp = new TokenNode(*_nIt++);
-    if (assignmentOp->type != TokenType::ASSIGNMENT_OPERATOR) {
-      throwMissingAssignmentOperatorError(assignmentOp);
-    }
-
-    addSiblingAndAdvance(assignmentOp);
-
-    // can be string OR expression
-    TokenNode *unknown = new TokenNode(*_nIt++);
-    if (unknown->type == TokenType::STRING) {
-      _current->sibling = unknown;
-      _current = unknown;
-      return true;
-    }
-
-    // FOR TESTING, just to get single number
-    addSiblingAndAdvance(unknown);
-
-    // else, must be an expression to be valid
-    // isExpression(); create
-    return true;
-
-  } catch (const std::exception &ex) {
-    std::cerr << "malformed initialization expression: " << ex.what()
-              << std::endl;
-    exit(1);
+  if (identifier->getTypeName() != "IDENTIFIER") {
+    throwMissingIdentifierError(identifier);
   }
+
+  addSiblingAndAdvance(identifier);
+
+  // followed by assignment operator
+  TokenNode *assignmentOp = new TokenNode(*_nIt++);
+  if (assignmentOp->type != TokenType::ASSIGNMENT_OPERATOR) {
+    throwMissingAssignmentOperatorError(assignmentOp);
+  }
+
+  addSiblingAndAdvance(assignmentOp);
+
+  // can be string OR expression
+  TokenNode *unknown = new TokenNode(*_nIt++);
+  if (unknown->type == TokenType::STRING) {
+    _current->sibling = unknown;
+    _current = unknown;
+    return true;
+  }
+
+  // FOR TESTING, just to get single number
+  addSiblingAndAdvance(unknown);
+
+  // else, must be an expression to be valid
+  // isExpression(); create
+  return true;
 }
 
 bool CSTree::isBooleanExpression() {
-  try {
-    TokenNode *holderNode = _current;
-    auto holderIt = _nIt;
+  TokenNode *holderNode = _current;
+  auto holderIt = _nIt;
 
-    // check if single operand,
-    // if true AND next token isnt relational op - switch to boolExp case
-    // checks
+  // check if single operand,
+  // if true AND next token isnt relational op - switch to boolExp case
+  // checks
 
-    if (isNumericalExpression() ||
-        (!_operandFlag || (_operandFlag && isRelationalOperator(_nIt->type)))) {
+  if (isNumericalExpression() ||
+      (!_operandFlag || (_operandFlag && isRelationalOperator(_nIt->type)))) {
+    TokenNode *next = new TokenNode(*_nIt++);
+
+    addSiblingAndAdvance(next);
+    if (next->type == TokenType::TRUE || next->type == TokenType::FALSE) {
+      return true;
+    }
+
+    if (!isNumericalExpression() && !isBooleanExpression()) {
+      throwMissingNumericalExpressionError(next);
+    }
+    if (isBooleanOperator(_nIt->type)) {
+      addSiblingAndAdvance(new TokenNode(*_nIt++));
+      return isBooleanExpression();
+    }
+    return true;
+  } else {
+    // clear tree of num, fix this mess
+    revertState(holderNode);
+    TokenNode *first = new TokenNode(*_nIt++);
+
+    switch (first->type) {
+    case TokenType::FALSE:
+    case TokenType::TRUE: {
+      // boolean TRUE or FALSE
+
+      addSiblingAndAdvance(first);
+      return true;
+    }
+    case TokenType::IDENTIFIER: {
+      addSiblingAndAdvance(first);
+      TokenNode *second = new TokenNode(*_nIt++);
+
+      // identifier & boolean op & boolean expression (recursion)
+      if (isBooleanOperator(second->type)) {
+        addSiblingAndAdvance(second);
+        if (!isBooleanExpression()) {
+          throwMissingBooleanExpressionError(second);
+        }
+        return true;
+      }
+
+      // identifier
+      else {
+        _nIt--; // un-gets second
+        delete second;
+        return true;
+      }
+    }
+    case TokenType::L_PAREN: {
+      // L-Paren & identifier & boolean op & boolean expression (recursion)
+      // & R-Paren
+
+      // add L-Paren to tree
+
+      addSiblingAndAdvance(first);
+
       TokenNode *next = new TokenNode(*_nIt++);
+      if (next->type != TokenType::IDENTIFIER) {
+        throwMissingIdentifierError(next);
+      }
+
+      // add identifier to tree
 
       addSiblingAndAdvance(next);
-      if (next->type == TokenType::TRUE || next->type == TokenType::FALSE) {
-        return true;
+
+      TokenNode *boolOp = new TokenNode(*_nIt++);
+      if (!isBooleanOperator(boolOp->type)) {
+        throwMissingBooleanExpressionError(boolOp);
       }
 
-      if (!isNumericalExpression() && !isBooleanExpression()) {
-        throwMissingNumericalExpressionError(next);
+      // add boolean operator to tree
+
+      addSiblingAndAdvance(boolOp);
+
+      // handles inner boolean expression itself
+      if (!isBooleanExpression()) {
+        throwMissingBooleanExpressionError(boolOp);
       }
-      if (isBooleanOperator(_nIt->type)) {
-        addSiblingAndAdvance(new TokenNode(*_nIt++));
-        return isBooleanExpression();
+
+      next = new TokenNode(*_nIt++);
+      if (next->type != TokenType::R_PAREN) {
+        throwMissingClosingParenthesisError(next);
       }
+
+      // add R-Paren to tree
+      addSiblingAndAdvance(next);
+
       return true;
-    } else {
-      // clear tree of num, fix this mess
-      revertState(holderNode);
-      TokenNode *first = new TokenNode(*_nIt++);
-
-      switch (first->type) {
-      case TokenType::FALSE:
-      case TokenType::TRUE: {
-        // boolean TRUE or FALSE
-
-        addSiblingAndAdvance(first);
-        return true;
-      }
-      case TokenType::IDENTIFIER: {
-        addSiblingAndAdvance(first);
-        TokenNode *second = new TokenNode(*_nIt++);
-
-        // identifier & boolean op & boolean expression (recursion)
-        if (isBooleanOperator(second->type)) {
-          addSiblingAndAdvance(second);
-          if (!isBooleanExpression()) {
-            throwMissingBooleanExpressionError(second);
-          }
-          return true;
-        }
-
-        // identifier
-        else {
-          _nIt--; // un-gets second
-          delete second;
-          return true;
-        }
-      }
-      case TokenType::L_PAREN: {
-        // L-Paren & identifier & boolean op & boolean expression (recursion)
-        // & R-Paren
-
-        // add L-Paren to tree
-
-        addSiblingAndAdvance(first);
-
-        TokenNode *next = new TokenNode(*_nIt++);
-        if (next->type != TokenType::IDENTIFIER) {
-          throwMissingIdentifierError(next);
-        }
-
-        // add identifier to tree
-
-        addSiblingAndAdvance(next);
-
-        TokenNode *boolOp = new TokenNode(*_nIt++);
-        if (!isBooleanOperator(boolOp->type)) {
-          throwMissingBooleanExpressionError(boolOp);
-        }
-
-        // add boolean operator to tree
-
-        addSiblingAndAdvance(boolOp);
-
-        // handles inner boolean expression itself
-        if (!isBooleanExpression()) {
-          throwMissingBooleanExpressionError(boolOp);
-        }
-
-        next = new TokenNode(*_nIt++);
-        if (next->type != TokenType::R_PAREN) {
-          throwMissingClosingParenthesisError(next);
-        }
-
-        // add R-Paren to tree
-        addSiblingAndAdvance(next);
-
-        return true;
-      }
-      default: {
-        // numerical expression & boolean relational expression & numerical
-        // expression not handled here anymore, but whats the default case?
-        // error? or return false maybe
-        revertState(holderNode);
-        return false;
-      }
-      }
+    }
+    default: {
+      // numerical expression & boolean relational expression & numerical
+      // expression not handled here anymore, but whats the default case?
+      // error? or return false maybe
       revertState(holderNode);
       return false;
     }
-  } catch (const std::exception &ex) {
-    std::cerr << "malformed boolean expression: " << ex.what() << std::endl;
-    exit(1);
+    }
+    revertState(holderNode);
+    return false;
   }
 }
 
@@ -560,7 +536,6 @@ bool CSTree::isOperand(TokenNode *token) {
 }
 
 void CSTree::isFunction() {
-  try {
     TokenNode *next = new TokenNode(*_nIt++);
 
     // function's datatype
@@ -608,15 +583,9 @@ void CSTree::isFunction() {
     }
 
     addSiblingAndAdvance(next);
-
-  } catch (const std::exception &ex) {
-    std::cerr << "malformed function: " << ex.what() << std::endl;
-    exit(1);
-  }
 }
 
 bool CSTree::isParameterList() {
-  try {
     // datatype identifier
     TokenNode *next = new TokenNode(*_nIt++);
     if (next->getTypeName() != "IDENTIFIER") {
@@ -673,20 +642,10 @@ bool CSTree::isParameterList() {
       delete next;
     }
     return true;
-
-  } catch (const std::exception &ex) {
-    if (_chainCheck || _paramCheck) {
-      return false;
-    } else {
-      std::cerr << "malformed parameter list: " << ex.what() << std::endl;
-      exit(1);
-    }
-  }
 }
 
 void CSTree::isProcedure() {
   // identifer
-  try {
     TokenNode *next = new TokenNode(*_nIt++);
 
     // main procedure, treat uniquely
@@ -738,15 +697,9 @@ void CSTree::isProcedure() {
     }
 
     addSiblingAndAdvance(next);
-
-  } catch (const std::exception &ex) {
-    std::cerr << "malformed procedure: " << ex.what() << std::endl;
-    exit(1);
-  }
 }
 
 void CSTree::isMain() {
-  try {
     // L-Paren
     TokenNode *next = new TokenNode(*_nIt++);
 
@@ -774,14 +727,9 @@ void CSTree::isMain() {
     }
 
     addSiblingAndAdvance(next);
-  } catch (const std::exception &ex) {
-    std::cerr << "malformed main procedure: " << ex.what() << std::endl;
-    exit(1);
-  }
 }
 
 void CSTree::isDatatypeSpecifier() {
-  try {
     // can be:
     // declaration statement
     // dec statement & initializaton statement
@@ -801,15 +749,9 @@ void CSTree::isDatatypeSpecifier() {
 
     addSiblingAndAdvance(next);
     _nIt--;
-
-  } catch (const std::exception &ex) {
-    std::cerr << "malformed datatype specifier: " << ex.what() << std::endl;
-    exit(1);
-  }
 }
 
 bool CSTree::isIdentifierList() {
-  try {
     TokenNode *next = new TokenNode(*_nIt++);
 
     // variable name
@@ -860,109 +802,6 @@ bool CSTree::isIdentifierList() {
       delete next;
     }
     return true;
-
-  } catch (const std::exception &ex) {
-    if (_chainCheck) {
-      return false;
-    } else {
-      std::cerr << "malformed identifier list: " << ex.what() << std::endl;
-      exit(1);
-    }
-  }
 }
 
-void CSTree::throwSyntaxError(TokenNode *node, const std::string &message) {
-  throw std::runtime_error("Syntax error on line " +
-                           std::to_string(node->lineNumber) + ": " + message);
-}
 
-void CSTree::throwInvalidProcedureNameError(TokenNode *node) {
-  throwSyntaxError(node, "reserved word \"" + node->lexeme +
-                             "\" cannot be used as a procedure name.");
-}
-
-void CSTree::throwInvalidFunctionNameError(TokenNode *node) {
-  throwSyntaxError(node, "reserved word \"" + node->lexeme +
-                             "\" cannot be used for the name of a function.");
-}
-
-void CSTree::throwInvalidVariableNameError(TokenNode *node) {
-  throwSyntaxError(node, "reserved word \"" + node->lexeme +
-                             "\" cannot be used for the name of a variable.");
-}
-
-void CSTree::throwArrayNegativeDeclarationError(TokenNode *node) {
-  throwSyntaxError(node, "array declaration size must be a positive integer.");
-}
-
-void CSTree::throwMissingInitializationExpressionError(TokenNode *node) {
-  throwSyntaxError(node, "missing initialization expression.");
-}
-
-void CSTree::throwMissingBooleanExpressionError(TokenNode *node) {
-  throwSyntaxError(node, "missing boolean expression.");
-}
-
-void CSTree::throwMissingNumericalExpressionError(TokenNode *node) {
-  throwSyntaxError(node, "missing numerical expression.");
-}
-
-void CSTree::throwMissingOpeningParenthesisError(TokenNode *node) {
-  throwSyntaxError(node, "missing opening parenthesis.");
-}
-
-void CSTree::throwMissingClosingParenthesisError(TokenNode *node) {
-  throwSyntaxError(node, "missing closing paranthesis.");
-}
-
-void CSTree::throwMissingOpeningBraceError(TokenNode *node) {
-  throwSyntaxError(node, "missing opening brace.");
-}
-
-void CSTree::throwMissingClosingBraceError(TokenNode *node) {
-  throwSyntaxError(node, "missing closing brace.");
-}
-
-void CSTree::throwMissingOpeningBracketError(TokenNode *node) {
-  throwSyntaxError(node, "missing opening bracket.");
-}
-
-void CSTree::throwMissingClosingBracketError(TokenNode *node) {
-  throwSyntaxError(node, "missing closing bracket.");
-}
-
-void CSTree::throwMissingSemicolonError(TokenNode *node) {
-  throwSyntaxError(node, "missing semicolon.");
-}
-
-void CSTree::throwMissingIdentifierError(TokenNode *node) {
-  throwSyntaxError(node, "missing identifier.");
-}
-
-void CSTree::throwMissingIdentifierListError(TokenNode *node) {
-  throwSyntaxError(node, "missing identifier list.");
-}
-
-void CSTree::throwMissingDatatypeError(TokenNode *node) {
-  throwSyntaxError(node, "missing datatype.");
-}
-
-void CSTree::throwMissingAssignmentOperatorError(TokenNode *node) {
-  throwSyntaxError(node, "missing assignment operator.");
-}
-
-void CSTree::throwMissingBooleanOperatorError(TokenNode *node) {
-  throwSyntaxError(node, "missing boolean operator.");
-}
-
-void CSTree::throwMissingPlusOperatorError(TokenNode *node) {
-  throwSyntaxError(node, "missing plus operator.");
-}
-
-void CSTree::throwMissingMinusOperatorError(TokenNode *node) {
-  throwSyntaxError(node, "missing minus operator.");
-}
-
-void CSTree::throwMissingParameterListError(TokenNode *node) {
-  throwSyntaxError(node, "missing parameter list.");
-}

@@ -45,32 +45,6 @@ private:
   void revertState(TokenNode *node);
 
 private:
-  // Exceptions
-  void throwSyntaxError(TokenNode *node, const std::string &message);
-  void throwInvalidProcedureNameError(TokenNode *node);
-  void throwInvalidFunctionNameError(TokenNode *node);
-  void throwInvalidVariableNameError(TokenNode *node);
-  void throwArrayNegativeDeclarationError(TokenNode *node);
-  void throwMissingInitializationExpressionError(TokenNode *node);
-  void throwMissingBooleanExpressionError(TokenNode *node);
-  void throwMissingNumericalExpressionError(TokenNode *node);
-  void throwMissingOpeningParenthesisError(TokenNode *node);
-  void throwMissingClosingParenthesisError(TokenNode *node);
-  void throwMissingOpeningBraceError(TokenNode *node);
-  void throwMissingClosingBraceError(TokenNode *node);
-  void throwMissingOpeningBracketError(TokenNode *node);
-  void throwMissingClosingBracketError(TokenNode *node);
-  void throwMissingSemicolonError(TokenNode *node);
-  void throwMissingIdentifierError(TokenNode *node);
-  void throwMissingIdentifierListError(TokenNode *node);
-  void throwMissingDatatypeError(TokenNode *node);
-  void throwMissingAssignmentOperatorError(TokenNode *node);
-  void throwMissingBooleanOperatorError(TokenNode *node);
-  void throwMissingPlusOperatorError(TokenNode *node);
-  void throwMissingMinusOperatorError(TokenNode *node);
-  void throwMissingParameterListError(TokenNode *node);
-
-private:
   bool _operandFlag;
   bool _chainCheck;
   bool _paramCheck;
