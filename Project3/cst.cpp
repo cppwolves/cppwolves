@@ -594,29 +594,69 @@ void CSTree::isFunction() {
 
 bool CSTree::isParameterList() {
   try {
+    // datatype identifier
     TokenNode *next = new TokenNode(*_nIt++);
     if (next->getTypeName() != "IDENTIFIER") {
       throwTokenError(next, "Expected datatype");
     }
 
     addSiblingAndAdvance(next);
+
+    // variable name
     next = new TokenNode(*_nIt++);
     if (next->getTypeName() != "IDENTIFIER") {
       throwTokenError(next, "Expected identifier");
-    }
-    if (isKeyword(next->type)) {
+    } else if (isKeyword(next->type)) {
       throwTokenError(next, "Keyword cannot be a function name");
     }
-
     addSiblingAndAdvance(next);
+
+    next = new TokenNode(*_nIt++);
+
+    // array
+    if (next->type == TokenType::L_BRACKET) {
+      addSiblingAndAdvance(next);
+
+      // array index
+      next = new TokenNode(*_nIt++);
+
+      // doesnt currently account for variables be used to access arrays
+      if (next->type != TokenType::INTEGER || std::stoi(next->lexeme) < 0) {
+        throwTokenError(next, "Array indices must be a positive integer");
+      }
+      addSiblingAndAdvance(next);
+
+      // right bracket
+      next = new TokenNode(*_nIt++);
+      if (next->type != TokenType::R_BRACKET) {
+        // doesnt currently account for numExp or anything other than whole,
+        // positive int
+        throwTokenError(next, "Expected R-Bracket");
+      }
+      addSiblingAndAdvance(next);
+
+      // get next token to allow comma check
+      next = new TokenNode(*_nIt++);
+    }
+    if (next->type == TokenType::COMMA) {
+      addSiblingAndAdvance(next);
+
+      _chainCheck = true;
+      isParameterList();
+      _chainCheck = false;
+    } else {
+      // ptr? reference? can we just ignore it all for now
+      _nIt--; // unget
+      delete next;
+    }
     return true;
 
-    // add chaining for multiples
-
   } catch (const std::exception &ex) {
-    std::cerr << "malformed parameter list: " << ex.what() << std::endl;
-    exit(1);
+    if (_chainCheck) {
+      return false;
+    } else {
+      std::cerr << "malformed parameter list: " << ex.what() << std::endl;
+      exit(1);
+    }
   }
-
-  // data type specifier + identifer + parameter list
 }
