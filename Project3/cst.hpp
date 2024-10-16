@@ -25,6 +25,9 @@ class CSTree {
     void isFor();
     void isWhile();
     void isFunction();
+    void isDatatypeSpecifier();
+    void isProcedure();
+    void isMain();
     void addSiblingAndAdvance(TokenNode *node);
     void addChildAndAdvance(TokenNode *node);
 
@@ -43,6 +46,7 @@ class CSTree {
    private:
     bool _operandFlag;
     bool _chainCheck;
+    bool _paramCheck;
     std::stack<TokenType> _openStack{};
 };
 

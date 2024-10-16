@@ -43,6 +43,16 @@ CSTree::CSTree(std::vector<Token> &tokens) {
                         isFunction();
                         break;
                     }
+                    case TokenType::PROCEDURE: {
+                        isProcedure();
+                        break;
+                    }
+                    // case TokenType::INT:
+                    // case TokenType::CHAR:
+                    // case TokenType::BOOL: {
+                    //     isDatatypeSpecifier();
+                    //     break;
+                    // }
                     case TokenType::L_BRACE:
                     case TokenType::R_BRACE:
                     case TokenType::ELSE:
@@ -530,6 +540,8 @@ void CSTree::revertState(TokenNode *node) {
     }
 }
 
+// i think this function has a serious flaw with how the exceptions are handled
+// does it ever check isNumericalExp if isBool fails, or does it throw ex first
 bool CSTree::isExpression() {
     // valid if boolean or numerical expression
     // account for recursion
@@ -613,7 +625,7 @@ bool CSTree::isParameterList() {
         if (next->getTypeName() != "IDENTIFIER") {
             throwTokenError(next, "Expected identifier");
         } else if (isKeyword(next->type)) {
-            throwTokenError(next, "Keyword cannot be a function name");
+            throwTokenError(next, "Keyword cannot be a variable name");
         }
         addSiblingAndAdvance(next);
 
@@ -658,11 +670,135 @@ bool CSTree::isParameterList() {
         return true;
 
     } catch (const std::exception &ex) {
-        if (_chainCheck) {
+        if (_chainCheck || _paramCheck) {
             return false;
         } else {
             std::cerr << "malformed parameter list: " << ex.what() << std::endl;
             exit(1);
         }
+    }
+}
+
+void CSTree::isDatatypeSpecifier() {
+    try {
+        TokenNode *next = new TokenNode(*_nIt++);
+
+        if (next->getTypeName() != "IDENTIFIER") {
+            throwTokenError(next, "Expected identifier");
+        } else if (isKeyword(next->type)) {
+            throwTokenError(next, "Keyword cannot be a variable name");
+        }
+        addSiblingAndAdvance(next);
+        if (next->type == TokenType::SEMICOLON) {
+            return;
+        }
+        while (next->type != TokenType::SEMICOLON) {
+            next = new TokenNode(*_nIt++);
+            addSiblingAndAdvance(next);
+        }
+
+        return;
+        // early return, figure out other stuff
+        // either initialization OR assignment OR statement OR ...
+
+    } catch (const std::exception &ex) {
+        std::cerr << "malformed datatype specifier: " << ex.what() << std::endl;
+        exit(1);
+    }
+}
+
+void CSTree::isProcedure() {
+    // identifer
+    try {
+        TokenNode *next = new TokenNode(*_nIt++);
+
+        // main procedure, treat uniquely
+        if (next->type == TokenType::MAIN) {
+            addSiblingAndAdvance(next);
+            isMain();
+            return;
+        }
+
+        // else, named procedure
+        if (next->getTypeName() != "IDENTIFIER") {
+            throwTokenError(next, "Expected identifier");
+        } else if (isKeyword(next->type)) {
+            throwTokenError(next, "Keyword cannot be used as procedure name");
+        }
+
+        addSiblingAndAdvance(next);
+
+        next = new TokenNode(*_nIt++);
+
+        // L-Paren
+        if (next->type != TokenType::L_PAREN) {
+            throwTokenError(next, "Missing L-Paren");
+        }
+        _openStack.push(TokenType::L_PAREN);
+        addSiblingAndAdvance(next);
+        next = new TokenNode(*_nIt++);
+
+        // handle inside of (), can be void or paramList
+        if (next->type == TokenType::VOID) {
+            addSiblingAndAdvance(next);
+        } else {
+            _nIt--;  // delete next? lost mem
+            _paramCheck = true;
+            if (!isParameterList()) {
+                throwTokenError(next, "Expecting parameter list or void");
+            }
+            _paramCheck = false;
+        }
+
+        next = new TokenNode(*_nIt);
+
+        // R-Paren
+        if (next->type != TokenType::R_PAREN) {
+            throwTokenError(next, "Missing R-Paren");
+        }
+        if (_openStack.top() != TokenType::L_PAREN) {
+            throwTokenError(next, "R-Paren has no L-Paren");
+        }
+
+        addSiblingAndAdvance(next);
+
+    } catch (const std::exception &ex) {
+        std::cerr << "malformed procedure: " << ex.what() << std::endl;
+        exit(1);
+    }
+}
+
+void CSTree::isMain() {
+    try {
+        // L-Paren
+        TokenNode *next = new TokenNode(*_nIt++);
+
+        if (next->type != TokenType::L_PAREN) {
+            throwTokenError(next, "Missing L-Paren");
+        }
+        _openStack.push(TokenType::L_PAREN);
+        addSiblingAndAdvance(next);
+
+        next = new TokenNode(*_nIt++);
+
+        // handle inside of (), must be void
+        if (next->type != TokenType::VOID) {
+            throwTokenError(next, "Main procedure must have no parameters");
+        }
+        addSiblingAndAdvance(next);
+
+        // R-Paren
+        next = new TokenNode(*_nIt);
+        if (next->type != TokenType::R_PAREN) {
+            throwTokenError(next, "Missing R-Paren");
+        }
+        if (_openStack.top() != TokenType::L_PAREN) {
+            throwTokenError(next, "R-Paren has no L-Paren");
+        }
+
+        addSiblingAndAdvance(next);
+    } catch (const std::exception &ex) {
+        std::cerr << "malformed main procedure: " << ex.what() << std::endl;
+        exit(1);
     }
 }
