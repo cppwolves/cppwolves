@@ -116,4 +116,9 @@ static bool isNumericOperator(TokenType type) {
            type == TokenType::DIVIDE || type == TokenType::MODULO;
 }
 
+static bool isDataType(TokenType type) {
+    return type == TokenType::CHAR || type == TokenType::INT ||
+           type == TokenType::BOOL;
+}
+
 #endif  // TOKEN_ENUM_HPP

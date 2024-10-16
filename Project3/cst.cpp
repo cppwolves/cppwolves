@@ -43,6 +43,16 @@ CSTree::CSTree(std::vector<Token> &tokens) {
         isFunction();
         break;
       }
+      case TokenType::PROCEDURE: {
+        isProcedure();
+        break;
+      }
+      case TokenType::INT:
+      case TokenType::CHAR:
+      case TokenType::BOOL: {
+        isDatatypeSpecifier();
+        break;
+      }
       case TokenType::L_BRACE:
       case TokenType::R_BRACE:
       case TokenType::ELSE:
@@ -431,9 +441,12 @@ bool CSTree::isNumericalExpression() {
       default: {
         // operand
         _nIt--;
+        TokenType type = next->type;
+
         delete next;
         _operandFlag = true;
-        return true;
+
+        return !isRelationalOperator(type);
       }
       }
     }
@@ -451,6 +464,9 @@ bool CSTree::isNumericalExpression() {
       addSiblingAndAdvance(first);
 
       if (!isNumericalExpression()) {
+        if (isRelationalOperator(_nIt->type)) {
+          return false;
+        }
         throwTokenError(first, "Expected numerical expression");
       }
 
@@ -524,6 +540,8 @@ void CSTree::revertState(TokenNode *node) {
   }
 }
 
+// i think this function has a serious flaw with how the exceptions are handled
+// does it ever check isNumericalExp if isBool fails, or does it throw ex first
 bool CSTree::isExpression() {
   // valid if boolean or numerical expression
   // account for recursion
@@ -543,10 +561,10 @@ void CSTree::isFunction() {
   try {
     TokenNode *next = new TokenNode(*_nIt++);
 
-    // identifer for datatype
+    // function's datatype
 
-    if (next->getTypeName() != "IDENTIFIER") {
-      throwTokenError(next, "Expecting identifier");
+    if (!isDataType(next->type)) {
+      throwTokenError(next, "Expecting datatype");
     }
 
     addSiblingAndAdvance(next);
@@ -554,6 +572,7 @@ void CSTree::isFunction() {
     next = new TokenNode(*_nIt++);
 
     // identifer for function name
+
     if (next->getTypeName() != "IDENTIFIER") {
       throwTokenError(next, "Expecting identifier");
     } else if (isKeyword(next->type)) {
@@ -565,6 +584,7 @@ void CSTree::isFunction() {
     next = new TokenNode(*_nIt++);
 
     // parenthesis
+
     if (next->type != TokenType::L_PAREN) {
       throwTokenError(next, "Expecting L-Paren");
     }
@@ -572,6 +592,7 @@ void CSTree::isFunction() {
     _openStack.push(TokenType::L_PAREN);
 
     // handle inside of ()
+
     if (!isParameterList()) {
       throwTokenError(next, "Expecting parameter list");
     }
@@ -607,7 +628,7 @@ bool CSTree::isParameterList() {
     if (next->getTypeName() != "IDENTIFIER") {
       throwTokenError(next, "Expected identifier");
     } else if (isKeyword(next->type)) {
-      throwTokenError(next, "Keyword cannot be a function name");
+      throwTokenError(next, "Keyword cannot be a variable name");
     }
     addSiblingAndAdvance(next);
 
@@ -652,10 +673,221 @@ bool CSTree::isParameterList() {
     return true;
 
   } catch (const std::exception &ex) {
-    if (_chainCheck) {
+    if (_chainCheck || _paramCheck) {
       return false;
     } else {
       std::cerr << "malformed parameter list: " << ex.what() << std::endl;
+      exit(1);
+    }
+  }
+}
+
+void CSTree::isProcedure() {
+  // identifer
+  try {
+    TokenNode *next = new TokenNode(*_nIt++);
+
+    // main procedure, treat uniquely
+    if (next->type == TokenType::MAIN) {
+      addSiblingAndAdvance(next);
+      isMain();
+      return;
+    }
+
+    // else, named procedure
+    if (next->getTypeName() != "IDENTIFIER") {
+      throwTokenError(next, "Expected identifier");
+    } else if (isKeyword(next->type)) {
+      throwTokenError(next, "Keyword cannot be used as procedure name");
+    }
+
+    addSiblingAndAdvance(next);
+
+    next = new TokenNode(*_nIt++);
+
+    // L-Paren
+    if (next->type != TokenType::L_PAREN) {
+      throwTokenError(next, "Missing L-Paren");
+    }
+    _openStack.push(TokenType::L_PAREN);
+    addSiblingAndAdvance(next);
+    next = new TokenNode(*_nIt++);
+
+    // handle inside of (), can be void or paramList
+    if (next->type == TokenType::VOID) {
+      addSiblingAndAdvance(next);
+    } else {
+      _nIt--; // delete next? lost mem
+      _paramCheck = true;
+      if (!isParameterList()) {
+        throwTokenError(next, "Expecting parameter list or void");
+      }
+      _paramCheck = false;
+    }
+
+    next = new TokenNode(*_nIt);
+
+    // R-Paren
+    if (next->type != TokenType::R_PAREN) {
+      throwTokenError(next, "Missing R-Paren");
+    }
+    if (_openStack.top() != TokenType::L_PAREN) {
+      throwTokenError(next, "R-Paren has no L-Paren");
+    }
+
+    addSiblingAndAdvance(next);
+
+  } catch (const std::exception &ex) {
+    std::cerr << "malformed procedure: " << ex.what() << std::endl;
+    exit(1);
+  }
+}
+
+void CSTree::isMain() {
+  try {
+    // L-Paren
+    TokenNode *next = new TokenNode(*_nIt++);
+
+    if (next->type != TokenType::L_PAREN) {
+      throwTokenError(next, "Missing L-Paren");
+    }
+    _openStack.push(TokenType::L_PAREN);
+    addSiblingAndAdvance(next);
+
+    next = new TokenNode(*_nIt++);
+
+    // handle inside of (), must be void
+    if (next->type != TokenType::VOID) {
+      throwTokenError(next, "Main procedure must have no parameters");
+    }
+    addSiblingAndAdvance(next);
+
+    // R-Paren
+    next = new TokenNode(*_nIt);
+    if (next->type != TokenType::R_PAREN) {
+      throwTokenError(next, "Missing R-Paren");
+    }
+    if (_openStack.top() != TokenType::L_PAREN) {
+      throwTokenError(next, "R-Paren has no L-Paren");
+    }
+
+    addSiblingAndAdvance(next);
+  } catch (const std::exception &ex) {
+    std::cerr << "malformed main procedure: " << ex.what() << std::endl;
+    exit(1);
+  }
+}
+
+void CSTree::isDatatypeSpecifier() {
+  try {
+    // can be:
+    // declaration statement
+    // dec statement & initializaton statement
+
+    TokenNode *next = new TokenNode(*_nIt++);
+    _nIt--; // need node, but intialization list needs one back?
+    // std::cout << "ds: " << next->lexeme << "\n";
+
+    // if (next->getTypeName() != "IDENTIFIER") {
+    //     throwTokenError(next, "Expected identifier");
+    // } else if (isKeyword(next->type)) {
+    //     throwTokenError(next, "Keyword cannot be a variable name");
+    // }
+    // addSiblingAndAdvance(next);
+
+    // can either end in a semicolon or start identifier list
+
+    // next = new TokenNode(*_nIt++);
+
+    // declaration, add sib, decrement iterator, return
+    // if (next->type == TokenType::SEMICOLON) {
+    //     addSiblingAndAdvance(next);
+    //     _nIt--;
+    //     return;
+    // }
+
+    // intialization, get identifiers
+    _identifierListCheck = true;
+    // std::cout << "init: " << next->lexeme << "\n";
+
+    if (!isIdentifierList()) {
+      throwTokenError(next, "Expected identifier list");
+    }
+    _identifierListCheck = false;
+
+    next = new TokenNode(*_nIt++);
+    if (next->type == TokenType::SEMICOLON) {
+      // end, add sib, decrement iterator, return
+      addSiblingAndAdvance(next);
+      _nIt--;
+      return;
+    }
+
+    return; // ?
+
+  } catch (const std::exception &ex) {
+    std::cerr << "malformed datatype specifier: " << ex.what() << std::endl;
+    exit(1);
+  }
+}
+
+bool CSTree::isIdentifierList() {
+  try {
+    TokenNode *next = new TokenNode(*_nIt++);
+
+    // variable name
+    if (next->getTypeName() != "IDENTIFIER") {
+      throwTokenError(next, "Expected identifier");
+    } else if (isKeyword(next->type)) {
+      throwTokenError(next, "Keyword cannot be a variable name");
+    }
+    addSiblingAndAdvance(next);
+
+    next = new TokenNode(*_nIt++);
+
+    // array
+    if (next->type == TokenType::L_BRACKET) {
+      addSiblingAndAdvance(next);
+
+      // array index
+      next = new TokenNode(*_nIt++);
+
+      // doesnt currently account for variables be used to access arrays
+      if (next->type != TokenType::INTEGER || std::stoi(next->lexeme) < 0) {
+        throwTokenError(next, "Array indices must be a positive integer");
+      }
+      addSiblingAndAdvance(next);
+
+      // right bracket
+      next = new TokenNode(*_nIt++);
+      if (next->type != TokenType::R_BRACKET) {
+        // doesnt currently account for numExp or anything other than whole,
+        // positive int
+        throwTokenError(next, "Expected R-Bracket");
+      }
+      addSiblingAndAdvance(next);
+
+      // get next token to allow comma check
+      next = new TokenNode(*_nIt++);
+    }
+    if (next->type == TokenType::COMMA) {
+      addSiblingAndAdvance(next);
+
+      _chainCheck = true;
+      isIdentifierList();
+      _chainCheck = false;
+    } else {
+      // ptr? reference? can we just ignore it all for now
+      _nIt--; // unget
+      delete next;
+    }
+    return true;
+
+  } catch (const std::exception &ex) {
+    if (_chainCheck || _identifierListCheck) {
+      return false;
+    } else {
+      std::cerr << "malformed identifier list: " << ex.what() << std::endl;
       exit(1);
     }
   }
