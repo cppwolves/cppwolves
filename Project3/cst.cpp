@@ -431,9 +431,12 @@ bool CSTree::isNumericalExpression() {
                 default: {
                     // operand
                     _nIt--;
+                    TokenType type = next->type;
+
                     delete next;
                     _operandFlag = true;
-                    return true;
+
+                    return !isRelationalOperator(type);
                 }
             }
         }
@@ -451,6 +454,9 @@ bool CSTree::isNumericalExpression() {
                 addSiblingAndAdvance(first);
 
                 if (!isNumericalExpression()) {
+                    if (isRelationalOperator(_nIt->type)) {
+                        return false;
+                    }
                     throwTokenError(first, "Expected numerical expression");
                 }
 
@@ -629,7 +635,8 @@ bool CSTree::isParameterList() {
             // right bracket
             next = new TokenNode(*_nIt++);
             if (next->type != TokenType::R_BRACKET) {
-                // doesnt currently account for numExp or anything other than whole, positive int
+                // doesnt currently account for numExp or anything other than whole,
+                // positive int
                 throwTokenError(next, "Expected R-Bracket");
             }
             addSiblingAndAdvance(next);
