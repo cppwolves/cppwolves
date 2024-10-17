@@ -426,7 +426,6 @@ Token Tokenizer::getNextToken() {
       // Unterminated string
       throwUnterminatedStringError(
           Token(TokenType::INVALID_TOKEN, lexeme, startLine));
-      // return Token(TokenType::INVALID_TOKEN, lexeme, startLine);
     }
   }
 

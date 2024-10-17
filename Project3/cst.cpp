@@ -1,8 +1,8 @@
 #include "cst.hpp"
 
 #include "token_enum.hpp"
-#include "token_node.hpp"
 #include "token_error.hpp"
+#include "token_node.hpp"
 
 CSTree::CSTree(std::vector<Token> &tokens) {
   if (tokens.empty()) {
@@ -70,12 +70,14 @@ CSTree::CSTree(std::vector<Token> &tokens) {
 void CSTree::addSiblingAndAdvance(TokenNode *node) {
   handleOpenCloseDelimiters(node);
   _current->sibling = node;
+  _previous = _current;
   _current = node;
 }
 
 void CSTree::addChildAndAdvance(TokenNode *node) {
   handleOpenCloseDelimiters(node);
   _current->child = node;
+  _previous = _current;
   _current = node;
 }
 
@@ -224,7 +226,28 @@ bool CSTree::isBooleanExpression() {
   // check if single operand,
   // if true AND next token isnt relational op - switch to boolExp case
   // checks
-
+  if (_nIt->type == TokenType::L_PAREN) {
+    addSiblingAndAdvance(new TokenNode(*_nIt++));
+    if (isBooleanExpression()) {
+      if (_nIt->type == TokenType::R_PAREN) {
+        addSiblingAndAdvance(new TokenNode(*_nIt++));
+        if (isBooleanOperator(_nIt->type)) {
+          addSiblingAndAdvance(new TokenNode(*_nIt++));
+        }
+        if (_nIt->type == TokenType::SEMICOLON) {
+          return true;
+        }
+        if (_nIt->type == TokenType::R_PAREN) {
+          return true;
+        }
+        return isBooleanExpression();
+      }
+      return true;
+    } else {
+      revertState(holderNode);
+      return false;
+    }
+  }
   if (isNumericalExpression() ||
       (!_operandFlag || (_operandFlag && isRelationalOperator(_nIt->type)))) {
     TokenNode *next = new TokenNode(*_nIt++);
@@ -393,6 +416,10 @@ bool CSTree::isNumericalExpression() {
       }
     } else {
       switch (next->type) {
+      case TokenType::ASSIGNMENT_OPERATOR: {
+        addSiblingAndAdvance(next);
+        return isNumericalExpression();
+      }
       case TokenType::PLUS: {
         // i++
         addSiblingAndAdvance(next);
@@ -536,272 +563,270 @@ bool CSTree::isOperand(TokenNode *token) {
 }
 
 void CSTree::isFunction() {
-    TokenNode *next = new TokenNode(*_nIt++);
+  TokenNode *next = new TokenNode(*_nIt++);
 
-    // function's datatype
+  // function's datatype
 
-    if (!isDataType(next->type)) {
-      throwMissingDatatypeError(next);
-    }
+  if (!isDataType(next->type)) {
+    throwMissingDatatypeError(next);
+  }
 
-    addSiblingAndAdvance(next);
+  addSiblingAndAdvance(next);
 
-    next = new TokenNode(*_nIt++);
+  next = new TokenNode(*_nIt++);
 
-    // identifer for function name
+  // identifer for function name
 
-    if (next->getTypeName() != "IDENTIFIER") {
-      throwMissingIdentifierError(next);
-    } else if (isKeyword(next->type)) {
-      throwInvalidFunctionNameError(next);
-    }
+  if (next->getTypeName() != "IDENTIFIER") {
+    throwMissingIdentifierError(next);
+  } else if (isKeyword(next->type)) {
+    throwInvalidFunctionNameError(next);
+  }
 
-    addSiblingAndAdvance(next);
+  addSiblingAndAdvance(next);
 
-    next = new TokenNode(*_nIt++);
+  next = new TokenNode(*_nIt++);
 
-    // parenthesis
+  // parenthesis
 
-    if (next->type != TokenType::L_PAREN) {
-      throwMissingOpeningParenthesisError(next);
-    }
-    addSiblingAndAdvance(next);
-    _openStack.push(TokenType::L_PAREN);
+  if (next->type != TokenType::L_PAREN) {
+    throwMissingOpeningParenthesisError(next);
+  }
+  addSiblingAndAdvance(next);
+  _openStack.push(TokenType::L_PAREN);
 
-    // handle inside of ()
+  // handle inside of ()
 
-    if (!isParameterList()) {
-      throwMissingParameterListError(next);
-    }
+  if (!isParameterList()) {
+    throwMissingParameterListError(next);
+  }
 
-    next = new TokenNode(*_nIt);
-    if (next->type != TokenType::R_PAREN) {
-      throwMissingClosingParenthesisError(next);
-    }
-    if (_openStack.top() != TokenType::L_PAREN) {
-      throwMissingOpeningParenthesisError(next);
-    }
+  next = new TokenNode(*_nIt);
+  if (next->type != TokenType::R_PAREN) {
+    throwMissingClosingParenthesisError(next);
+  }
+  if (_openStack.top() != TokenType::L_PAREN) {
+    throwMissingOpeningParenthesisError(next);
+  }
 
-    addSiblingAndAdvance(next);
+  addSiblingAndAdvance(next);
 }
 
 bool CSTree::isParameterList() {
-    // datatype identifier
-    TokenNode *next = new TokenNode(*_nIt++);
-    if (next->getTypeName() != "IDENTIFIER") {
-      throwMissingDatatypeError(next);
-    }
+  // datatype identifier
+  TokenNode *next = new TokenNode(*_nIt++);
+  if (next->getTypeName() != "IDENTIFIER") {
+    throwMissingDatatypeError(next);
+  }
 
+  addSiblingAndAdvance(next);
+
+  // variable name
+  next = new TokenNode(*_nIt++);
+  if (next->getTypeName() != "IDENTIFIER") {
+    throwMissingIdentifierError(next);
+  } else if (isKeyword(next->type)) {
+    throwInvalidVariableNameError(next);
+  }
+  addSiblingAndAdvance(next);
+
+  next = new TokenNode(*_nIt++);
+
+  // array
+  if (next->type == TokenType::L_BRACKET) {
     addSiblingAndAdvance(next);
 
-    // variable name
+    // array index
     next = new TokenNode(*_nIt++);
-    if (next->getTypeName() != "IDENTIFIER") {
-      throwMissingIdentifierError(next);
-    } else if (isKeyword(next->type)) {
-      throwInvalidVariableNameError(next);
+
+    // doesnt currently account for variables be used to access arrays
+    if (next->type != TokenType::INTEGER || std::stoi(next->lexeme) < 0) {
+      throwArrayNegativeDeclarationError(next);
     }
     addSiblingAndAdvance(next);
 
+    // right bracket
     next = new TokenNode(*_nIt++);
-
-    // array
-    if (next->type == TokenType::L_BRACKET) {
-      addSiblingAndAdvance(next);
-
-      // array index
-      next = new TokenNode(*_nIt++);
-
-      // doesnt currently account for variables be used to access arrays
-      if (next->type != TokenType::INTEGER || std::stoi(next->lexeme) < 0) {
-        throwArrayNegativeDeclarationError(next);
-      }
-      addSiblingAndAdvance(next);
-
-      // right bracket
-      next = new TokenNode(*_nIt++);
-      if (next->type != TokenType::R_BRACKET) {
-        // doesnt currently account for numExp or anything other than whole,
-        // positive int
-        throwMissingClosingBracketError(next);
-      }
-      addSiblingAndAdvance(next);
-
-      // get next token to allow comma check
-      next = new TokenNode(*_nIt++);
+    if (next->type != TokenType::R_BRACKET) {
+      // doesnt currently account for numExp or anything other than whole,
+      // positive int
+      throwMissingClosingBracketError(next);
     }
-    if (next->type == TokenType::COMMA) {
-      addSiblingAndAdvance(next);
+    addSiblingAndAdvance(next);
 
-      _chainCheck = true;
-      isParameterList();
-      _chainCheck = false;
-    } else {
-      // ptr? reference? can we just ignore it all for now
-      _nIt--; // unget
-      delete next;
-    }
-    return true;
+    // get next token to allow comma check
+    next = new TokenNode(*_nIt++);
+  }
+  if (next->type == TokenType::COMMA) {
+    addSiblingAndAdvance(next);
+
+    _chainCheck = true;
+    isParameterList();
+    _chainCheck = false;
+  } else {
+    // ptr? reference? can we just ignore it all for now
+    _nIt--; // unget
+    delete next;
+  }
+  return true;
 }
 
 void CSTree::isProcedure() {
   // identifer
-    TokenNode *next = new TokenNode(*_nIt++);
+  TokenNode *next = new TokenNode(*_nIt++);
 
-    // main procedure, treat uniquely
-    if (next->type == TokenType::MAIN) {
-      addSiblingAndAdvance(next);
-      isMain();
-      return;
-    }
-
-    // else, named procedure
-    if (next->getTypeName() != "IDENTIFIER") {
-      throwMissingIdentifierError(next);
-    } else if (isKeyword(next->type)) {
-      throwInvalidProcedureNameError(next);
-    }
-
+  // main procedure, treat uniquely
+  if (next->type == TokenType::MAIN) {
     addSiblingAndAdvance(next);
+    isMain();
+    return;
+  }
 
-    next = new TokenNode(*_nIt++);
+  // else, named procedure
+  if (next->getTypeName() != "IDENTIFIER") {
+    throwMissingIdentifierError(next);
+  } else if (isKeyword(next->type)) {
+    throwInvalidProcedureNameError(next);
+  }
 
-    // L-Paren
-    if (next->type != TokenType::L_PAREN) {
-      throwMissingOpeningParenthesisError(next);
-    }
-    _openStack.push(TokenType::L_PAREN);
+  addSiblingAndAdvance(next);
+
+  next = new TokenNode(*_nIt++);
+
+  // L-Paren
+  if (next->type != TokenType::L_PAREN) {
+    throwMissingOpeningParenthesisError(next);
+  }
+  _openStack.push(TokenType::L_PAREN);
+  addSiblingAndAdvance(next);
+  next = new TokenNode(*_nIt++);
+
+  // handle inside of (), can be void or paramList
+  if (next->type == TokenType::VOID) {
     addSiblingAndAdvance(next);
-    next = new TokenNode(*_nIt++);
-
-    // handle inside of (), can be void or paramList
-    if (next->type == TokenType::VOID) {
-      addSiblingAndAdvance(next);
-    } else {
-      _nIt--; // delete next? lost mem
-      _paramCheck = true;
-      if (!isParameterList()) {
-        throwSyntaxError(next, "Missing parameter list or void keyword");
-      }
-      _paramCheck = false;
+  } else {
+    _nIt--; // delete next? lost mem
+    _paramCheck = true;
+    if (!isParameterList()) {
+      throwSyntaxError(next, "Missing parameter list or void keyword");
     }
+    _paramCheck = false;
+  }
 
-    next = new TokenNode(*_nIt);
+  next = new TokenNode(*_nIt);
 
-    // R-Paren
-    if (next->type != TokenType::R_PAREN) {
-      throwMissingClosingParenthesisError(next);
-    }
-    if (_openStack.top() != TokenType::L_PAREN) {
-      throwMissingOpeningParenthesisError(next);
-    }
+  // R-Paren
+  if (next->type != TokenType::R_PAREN) {
+    throwMissingClosingParenthesisError(next);
+  }
+  if (_openStack.top() != TokenType::L_PAREN) {
+    throwMissingOpeningParenthesisError(next);
+  }
 
-    addSiblingAndAdvance(next);
+  addSiblingAndAdvance(next);
 }
 
 void CSTree::isMain() {
-    // L-Paren
-    TokenNode *next = new TokenNode(*_nIt++);
+  // L-Paren
+  TokenNode *next = new TokenNode(*_nIt++);
 
-    if (next->type != TokenType::L_PAREN) {
-      throwMissingOpeningParenthesisError(next);
-    }
-    _openStack.push(TokenType::L_PAREN);
-    addSiblingAndAdvance(next);
+  if (next->type != TokenType::L_PAREN) {
+    throwMissingOpeningParenthesisError(next);
+  }
+  _openStack.push(TokenType::L_PAREN);
+  addSiblingAndAdvance(next);
 
-    next = new TokenNode(*_nIt++);
+  next = new TokenNode(*_nIt++);
 
-    // handle inside of (), must be void
-    if (next->type != TokenType::VOID) {
-      throwSyntaxError(next, "Main procedure must have no parameters");
-    }
-    addSiblingAndAdvance(next);
+  // handle inside of (), must be void
+  if (next->type != TokenType::VOID) {
+    throwSyntaxError(next, "Main procedure must have no parameters");
+  }
+  addSiblingAndAdvance(next);
 
-    // R-Paren
-    next = new TokenNode(*_nIt);
-    if (next->type != TokenType::R_PAREN) {
-      throwMissingClosingParenthesisError(next);
-    }
-    if (_openStack.top() != TokenType::L_PAREN) {
-      throwMissingOpeningParenthesisError(next);
-    }
+  // R-Paren
+  next = new TokenNode(*_nIt);
+  if (next->type != TokenType::R_PAREN) {
+    throwMissingClosingParenthesisError(next);
+  }
+  if (_openStack.top() != TokenType::L_PAREN) {
+    throwMissingOpeningParenthesisError(next);
+  }
 
-    addSiblingAndAdvance(next);
+  addSiblingAndAdvance(next);
 }
 
 void CSTree::isDatatypeSpecifier() {
-    // can be:
-    // declaration statement
-    // dec statement & initializaton statement
+  // can be:
+  // declaration statement
+  // dec statement & initializaton statement
 
-    TokenNode *next = new TokenNode(*_nIt++);
-    _nIt--; // need node, but intialization list needs one back?
+  TokenNode *next = new TokenNode(*_nIt++);
+  _nIt--; // need node, but intialization list needs one back?
 
-    if (!isIdentifierList()) {
-      throwMissingIdentifierListError(next);
-    }
+  if (!isIdentifierList()) {
+    throwMissingIdentifierListError(next);
+  }
 
-    next = new TokenNode(*_nIt++);
-    if (next->type != TokenType::SEMICOLON) {
-      throwMissingSemicolonError(next);
-    }
-    // end, add sib, decrement iterator, return
+  next = new TokenNode(*_nIt++);
+  if (next->type != TokenType::SEMICOLON) {
+    throwMissingSemicolonError(next);
+  }
+  // end, add sib, decrement iterator, return
 
-    addSiblingAndAdvance(next);
-    _nIt--;
+  addSiblingAndAdvance(next);
+  _nIt--;
 }
 
 bool CSTree::isIdentifierList() {
-    TokenNode *next = new TokenNode(*_nIt++);
+  TokenNode *next = new TokenNode(*_nIt++);
 
-    // variable name
-    if (next->getTypeName() != "IDENTIFIER") {
-      throwMissingIdentifierError(next);
-    } else if (isKeyword(next->type)) {
-      throwInvalidVariableNameError(next);
+  // variable name
+  if (next->getTypeName() != "IDENTIFIER") {
+    throwMissingIdentifierError(next);
+  } else if (isKeyword(next->type)) {
+    throwInvalidVariableNameError(next);
+  }
+  addSiblingAndAdvance(next);
+
+  next = new TokenNode(*_nIt++);
+
+  // array
+  if (next->type == TokenType::L_BRACKET) {
+    _chainCheck = false; // is list, must be well-formed
+    addSiblingAndAdvance(next);
+
+    // array index
+    next = new TokenNode(*_nIt++);
+
+    // doesnt currently account for variables be used to access arrays
+    if (next->type != TokenType::INTEGER || std::stoi(next->lexeme) < 0) {
+      throwArrayNegativeDeclarationError(next);
     }
     addSiblingAndAdvance(next);
 
+    // right bracket
     next = new TokenNode(*_nIt++);
-
-    // array
-    if (next->type == TokenType::L_BRACKET) {
-      _chainCheck = false; // is list, must be well-formed
-      addSiblingAndAdvance(next);
-
-      // array index
-      next = new TokenNode(*_nIt++);
-
-      // doesnt currently account for variables be used to access arrays
-      if (next->type != TokenType::INTEGER || std::stoi(next->lexeme) < 0) {
-        throwArrayNegativeDeclarationError(next);
-      }
-      addSiblingAndAdvance(next);
-
-      // right bracket
-      next = new TokenNode(*_nIt++);
-      if (next->type != TokenType::R_BRACKET) {
-        // doesnt currently account for numExp or anything other than whole,
-        // positive int
-        throwMissingClosingBracketError(next);
-      }
-      addSiblingAndAdvance(next);
-
-      // get next token to allow comma check
-      next = new TokenNode(*_nIt++);
+    if (next->type != TokenType::R_BRACKET) {
+      // doesnt currently account for numExp or anything other than whole,
+      // positive int
+      throwMissingClosingBracketError(next);
     }
-    if (next->type == TokenType::COMMA) {
-      addSiblingAndAdvance(next);
+    addSiblingAndAdvance(next);
 
-      _chainCheck = true;
-      isIdentifierList();
-      _chainCheck = false;
-    } else {
-      // ptr? reference? can we just ignore it all for now
-      _nIt--; // unget
-      delete next;
-    }
-    return true;
+    // get next token to allow comma check
+    next = new TokenNode(*_nIt++);
+  }
+  if (next->type == TokenType::COMMA) {
+    addSiblingAndAdvance(next);
+
+    _chainCheck = true;
+    isIdentifierList();
+    _chainCheck = false;
+  } else {
+    // ptr? reference? can we just ignore it all for now
+    _nIt--; // unget
+    delete next;
+  }
+  return true;
 }
-
-
