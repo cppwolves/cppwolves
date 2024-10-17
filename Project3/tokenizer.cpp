@@ -368,7 +368,8 @@ Token Tokenizer::getNextToken() {
   if (currentChar == '+' || currentChar == '-') {
     // Determine if this is a number or an operator
     char nextChar = inputFile.peek();
-    if (isDigit(nextChar)) {
+    if (isDigit(nextChar) &&
+        (tokens.empty() || (tokens.back().type != TokenType::INTEGER))) {
       return number();
     } else {
       return operatorOrDelimiter();
@@ -442,7 +443,6 @@ Token Tokenizer::getNextToken() {
 }
 
 std::vector<Token> Tokenizer::tokenize() {
-  std::vector<Token> tokens;
   Token token = getNextToken();
 
   while (token.type != TokenType::END_OF_FILE) {

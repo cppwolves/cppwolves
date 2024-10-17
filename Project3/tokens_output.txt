@@ -1,351 +1,6 @@
 Token list:
 
 Token type: IDENTIFIER
-Token:      function
-
-Token type: IDENTIFIER
-Token:      int
-
-Token type: IDENTIFIER
-Token:      printf
-
-Token type: L_PAREN
-Token:      (
-
-Token type: IDENTIFIER
-Token:      char
-
-Token type: IDENTIFIER
-Token:      hex_digit
-
-Token type: R_PAREN
-Token:      )
-
-Token type: L_BRACE
-Token:      {
-
-Token type: IDENTIFIER
-Token:      int
-
-Token type: IDENTIFIER
-Token:      i
-
-Token type: COMMA
-Token:      ,
-
-Token type: IDENTIFIER
-Token:      digit
-
-Token type: SEMICOLON
-Token:      ;
-
-Token type: IDENTIFIER
-Token:      digit
-
-Token type: ASSIGNMENT_OPERATOR
-Token:      =
-
-Token type: INTEGER
-Token:      -1
-
-Token type: SEMICOLON
-Token:      ;
-
-Token type: IDENTIFIER
-Token:      if
-
-Token type: L_PAREN
-Token:      (
-
-Token type: L_PAREN
-Token:      (
-
-Token type: IDENTIFIER
-Token:      hex_digit
-
-Token type: GT_EQUAL
-Token:      >=
-
-Token type: SINGLE_QUOTE
-Token:      '
-
-Token type: STRING
-Token:      0
-
-Token type: SINGLE_QUOTE
-Token:      '
-
-Token type: R_PAREN
-Token:      )
-
-Token type: BOOLEAN_AND
-Token:      &&
-
-Token type: L_PAREN
-Token:      (
-
-Token type: IDENTIFIER
-Token:      hex_digit
-
-Token type: LT_EQUAL
-Token:      <=
-
-Token type: SINGLE_QUOTE
-Token:      '
-
-Token type: STRING
-Token:      9
-
-Token type: SINGLE_QUOTE
-Token:      '
-
-Token type: R_PAREN
-Token:      )
-
-Token type: R_PAREN
-Token:      )
-
-Token type: L_BRACE
-Token:      {
-
-Token type: IDENTIFIER
-Token:      digit
-
-Token type: ASSIGNMENT_OPERATOR
-Token:      =
-
-Token type: IDENTIFIER
-Token:      hex_digit
-
-Token type: MINUS
-Token:      -
-
-Token type: SINGLE_QUOTE
-Token:      '
-
-Token type: STRING
-Token:      0
-
-Token type: SINGLE_QUOTE
-Token:      '
-
-Token type: SEMICOLON
-Token:      ;
-
-Token type: R_BRACE
-Token:      }
-
-Token type: IDENTIFIER
-Token:      else
-
-Token type: L_BRACE
-Token:      {
-
-Token type: IDENTIFIER
-Token:      if
-
-Token type: L_PAREN
-Token:      (
-
-Token type: L_PAREN
-Token:      (
-
-Token type: IDENTIFIER
-Token:      hex_digit
-
-Token type: GT_EQUAL
-Token:      >=
-
-Token type: SINGLE_QUOTE
-Token:      '
-
-Token type: STRING
-Token:      a
-
-Token type: SINGLE_QUOTE
-Token:      '
-
-Token type: R_PAREN
-Token:      )
-
-Token type: BOOLEAN_AND
-Token:      &&
-
-Token type: L_PAREN
-Token:      (
-
-Token type: IDENTIFIER
-Token:      hex_digit
-
-Token type: LT_EQUAL
-Token:      <=
-
-Token type: SINGLE_QUOTE
-Token:      '
-
-Token type: STRING
-Token:      f
-
-Token type: SINGLE_QUOTE
-Token:      '
-
-Token type: R_PAREN
-Token:      )
-
-Token type: R_PAREN
-Token:      )
-
-Token type: L_BRACE
-Token:      {
-
-Token type: IDENTIFIER
-Token:      digit
-
-Token type: ASSIGNMENT_OPERATOR
-Token:      =
-
-Token type: IDENTIFIER
-Token:      hex_digit
-
-Token type: MINUS
-Token:      -
-
-Token type: SINGLE_QUOTE
-Token:      '
-
-Token type: STRING
-Token:      a
-
-Token type: SINGLE_QUOTE
-Token:      '
-
-Token type: PLUS
-Token:      +
-
-Token type: INTEGER
-Token:      10
-
-Token type: SEMICOLON
-Token:      ;
-
-Token type: R_BRACE
-Token:      }
-
-Token type: IDENTIFIER
-Token:      else
-
-Token type: L_BRACE
-Token:      {
-
-Token type: IDENTIFIER
-Token:      if
-
-Token type: L_PAREN
-Token:      (
-
-Token type: L_PAREN
-Token:      (
-
-Token type: IDENTIFIER
-Token:      hex_digit
-
-Token type: GT_EQUAL
-Token:      >=
-
-Token type: SINGLE_QUOTE
-Token:      '
-
-Token type: STRING
-Token:      A
-
-Token type: SINGLE_QUOTE
-Token:      '
-
-Token type: R_PAREN
-Token:      )
-
-Token type: BOOLEAN_AND
-Token:      &&
-
-Token type: L_PAREN
-Token:      (
-
-Token type: IDENTIFIER
-Token:      hex_digit
-
-Token type: LT_EQUAL
-Token:      <=
-
-Token type: SINGLE_QUOTE
-Token:      '
-
-Token type: STRING
-Token:      F
-
-Token type: SINGLE_QUOTE
-Token:      '
-
-Token type: R_PAREN
-Token:      )
-
-Token type: R_PAREN
-Token:      )
-
-Token type: L_BRACE
-Token:      {
-
-Token type: IDENTIFIER
-Token:      digit
-
-Token type: ASSIGNMENT_OPERATOR
-Token:      =
-
-Token type: IDENTIFIER
-Token:      hex_digit
-
-Token type: MINUS
-Token:      -
-
-Token type: SINGLE_QUOTE
-Token:      '
-
-Token type: STRING
-Token:      A
-
-Token type: SINGLE_QUOTE
-Token:      '
-
-Token type: PLUS
-Token:      +
-
-Token type: INTEGER
-Token:      10
-
-Token type: SEMICOLON
-Token:      ;
-
-Token type: R_BRACE
-Token:      }
-
-Token type: R_BRACE
-Token:      }
-
-Token type: R_BRACE
-Token:      }
-
-Token type: IDENTIFIER
-Token:      return
-
-Token type: IDENTIFIER
-Token:      digit
-
-Token type: SEMICOLON
-Token:      ;
-
-Token type: R_BRACE
-Token:      }
-
-Token type: IDENTIFIER
 Token:      procedure
 
 Token type: IDENTIFIER
@@ -364,85 +19,64 @@ Token type: L_BRACE
 Token:      {
 
 Token type: IDENTIFIER
-Token:      char
-
-Token type: IDENTIFIER
-Token:      hexnum
-
-Token type: L_BRACKET
-Token:      [
-
-Token type: INTEGER
-Token:      9
-
-Token type: R_BRACKET
-Token:      ]
-
-Token type: SEMICOLON
-Token:      ;
-
-Token type: IDENTIFIER
 Token:      int
 
 Token type: IDENTIFIER
-Token:      i
-
-Token type: COMMA
-Token:      ,
-
-Token type: IDENTIFIER
-Token:      digit
-
-Token type: COMMA
-Token:      ,
-
-Token type: IDENTIFIER
-Token:      number
+Token:      counter
 
 Token type: SEMICOLON
 Token:      ;
 
 Token type: IDENTIFIER
-Token:      number
+Token:      if
 
-Token type: ASSIGNMENT_OPERATOR
-Token:      =
+Token type: L_PAREN
+Token:      (
+
+Token type: L_PAREN
+Token:      (
 
 Token type: INTEGER
-Token:      0
+Token:      1
 
-Token type: SEMICOLON
-Token:      ;
-
-Token type: IDENTIFIER
-Token:      hexnum
-
-Token type: ASSIGNMENT_OPERATOR
-Token:      =
-
-Token type: DOUBLE_QUOTE
-Token:      "
-
-Token type: STRING
-Token:      feed\x0
-
-Token type: DOUBLE_QUOTE
-Token:      "
-
-Token type: SEMICOLON
-Token:      ;
-
-Token type: IDENTIFIER
-Token:      digit
-
-Token type: ASSIGNMENT_OPERATOR
-Token:      =
+Token type: PLUS
+Token:      +
 
 Token type: INTEGER
-Token:      0
+Token:      2
+
+Token type: R_PAREN
+Token:      )
+
+Token type: MINUS
+Token:      -
+
+Token type: INTEGER
+Token:      3
+
+Token type: BOOLEAN_EQUAL
+Token:      ==
+
+Token type: INTEGER
+Token:      -1
+
+Token type: R_PAREN
+Token:      )
+
+Token type: L_BRACE
+Token:      {
+
+Token type: IDENTIFIER
+Token:      return
+
+Token type: IDENTIFIER
+Token:      true
 
 Token type: SEMICOLON
 Token:      ;
+
+Token type: R_BRACE
+Token:      }
 
 Token type: IDENTIFIER
 Token:      for
@@ -462,48 +96,6 @@ Token:      0
 Token type: SEMICOLON
 Token:      ;
 
-Token type: L_PAREN
-Token:      (
-
-Token type: IDENTIFIER
-Token:      i
-
-Token type: LT
-Token:      <
-
-Token type: INTEGER
-Token:      4
-
-Token type: R_PAREN
-Token:      )
-
-Token type: BOOLEAN_AND
-Token:      &&
-
-Token type: L_PAREN
-Token:      (
-
-Token type: IDENTIFIER
-Token:      digit
-
-Token type: GT
-Token:      >
-
-Token type: INTEGER
-Token:      -1
-
-Token type: R_PAREN
-Token:      )
-
-Token type: SEMICOLON
-Token:      ;
-
-Token type: IDENTIFIER
-Token:      i
-
-Token type: ASSIGNMENT_OPERATOR
-Token:      =
-
 Token type: IDENTIFIER
 Token:      i
 
@@ -513,113 +105,44 @@ Token:      +
 Token type: INTEGER
 Token:      1
 
-Token type: R_PAREN
-Token:      )
+Token type: GT
+Token:      >
 
-Token type: L_BRACE
-Token:      {
+Token type: INTEGER
+Token:      5
 
-Token type: IDENTIFIER
-Token:      digit
-
-Token type: ASSIGNMENT_OPERATOR
-Token:      =
-
-Token type: IDENTIFIER
-Token:      hexdigit2int
-
-Token type: L_PAREN
-Token:      (
-
-Token type: IDENTIFIER
-Token:      hexnum
-
-Token type: L_BRACKET
-Token:      [
+Token type: SEMICOLON
+Token:      ;
 
 Token type: IDENTIFIER
 Token:      i
 
-Token type: R_BRACKET
-Token:      ]
-
-Token type: R_PAREN
-Token:      )
-
-Token type: SEMICOLON
-Token:      ;
-
-Token type: IDENTIFIER
-Token:      if
-
-Token type: L_PAREN
-Token:      (
-
-Token type: IDENTIFIER
-Token:      digit
-
-Token type: GT
-Token:      >
-
-Token type: INTEGER
-Token:      -1
-
-Token type: R_PAREN
-Token:      )
-
-Token type: L_BRACE
-Token:      {
-
-Token type: IDENTIFIER
-Token:      number
-
-Token type: ASSIGNMENT_OPERATOR
-Token:      =
-
-Token type: IDENTIFIER
-Token:      number
-
-Token type: ASTERISK
-Token:      *
-
-Token type: INTEGER
-Token:      16
+Token type: PLUS
+Token:      +
 
 Token type: PLUS
 Token:      +
 
-Token type: IDENTIFIER
-Token:      digit
-
-Token type: SEMICOLON
-Token:      ;
-
-Token type: R_BRACE
-Token:      }
-
-Token type: R_BRACE
-Token:      }
-
-Token type: IDENTIFIER
-Token:      if
-
-Token type: L_PAREN
-Token:      (
-
-Token type: IDENTIFIER
-Token:      digit
-
-Token type: GT
-Token:      >
-
-Token type: INTEGER
-Token:      -1
-
 Token type: R_PAREN
 Token:      )
 
 Token type: L_BRACE
 Token:      {
+
+Token type: R_BRACE
+Token:      }
+
+Token type: IDENTIFIER
+Token:      counter
+
+Token type: ASSIGNMENT_OPERATOR
+Token:      =
+
+Token type: INTEGER
+Token:      2
+
+Token type: SEMICOLON
+Token:      ;
 
 Token type: IDENTIFIER
 Token:      printf
@@ -631,7 +154,7 @@ Token type: DOUBLE_QUOTE
 Token:      "
 
 Token type: STRING
-Token:      Hex: 0x%s is %d decimal\n
+Token:      counter = %d\n
 
 Token type: DOUBLE_QUOTE
 Token:      "
@@ -640,22 +163,13 @@ Token type: COMMA
 Token:      ,
 
 Token type: IDENTIFIER
-Token:      hexnum
-
-Token type: COMMA
-Token:      ,
-
-Token type: IDENTIFIER
-Token:      number
+Token:      counter
 
 Token type: R_PAREN
 Token:      )
 
 Token type: SEMICOLON
 Token:      ;
-
-Token type: R_BRACE
-Token:      }
 
 Token type: R_BRACE
 Token:      }

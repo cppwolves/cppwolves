@@ -234,10 +234,8 @@ bool CSTree::isBooleanExpression() {
         if (isBooleanOperator(_nIt->type)) {
           addSiblingAndAdvance(new TokenNode(*_nIt++));
         }
-        if (_nIt->type == TokenType::SEMICOLON) {
-          return true;
-        }
-        if (_nIt->type == TokenType::R_PAREN) {
+        if (_nIt->type == TokenType::SEMICOLON ||
+            _nIt->type == TokenType::R_PAREN) {
           return true;
         }
         return isBooleanExpression();
