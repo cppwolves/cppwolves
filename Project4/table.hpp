@@ -17,6 +17,7 @@ private:
   Symbol *parseFunction(TokenNode **root, size_t scope);
   Symbol *parseProcedure(TokenNode **root, size_t scope);
   Symbol *parseDatatype(TokenNode **root, size_t scope);
+  void parseDeclarators(TokenNode **rootToken, Symbol* rootDeclarator);
 
   Symbol *parseParameterList(TokenNode **root, size_t scope);
   static size_t parseArraySize(TokenNode **root);

@@ -21,7 +21,7 @@ Symbol:
   Symbol *sibling
   Symbol *child
 
- */
+*/
 
 struct Scope {
   Scope(int _val, bool _used) : value(_val), used(_used) {}
@@ -83,7 +83,19 @@ void SymbolTable::parseCST(CSTree *cst) {
           if (!scopeStack.top().used) {
             scopeStack.top().used = true;
           }
-          addChild(parseDatatype(&currToken, scopeStack.top().value));
+          Symbol *datatype = parseDatatype(&currToken, scopeStack.top().value);
+          addChild(datatype);
+          if (currToken->type == TokenType::COMMA && currToken->sibling) {
+            // This is a declarator list: int i, j, k; (pass `int i` and append
+            // symbols of its siblings)
+            parseDeclarators(&currToken, datatype);
+            while (datatype->_sibling) {
+              Symbol *next = datatype->_sibling;
+              datatype->_sibling = next->_sibling;
+              next->_sibling = nullptr;
+              addChild(next);
+            }
+          }
         } else {
           // Move past token to get to the next child in the tree
           while (currToken->sibling) {
@@ -95,8 +107,6 @@ void SymbolTable::parseCST(CSTree *cst) {
     }
     currToken = currToken->child;
   }
-  // assert(scopeStack.top().value == 0 && scopeStack.size() == 1 &&
-  //        "Scope stack is not properly aligned");
 }
 
 Symbol *SymbolTable::parseFunction(TokenNode **root, size_t scope) {
@@ -213,6 +223,38 @@ Symbol *SymbolTable::parseProcedure(TokenNode **root, size_t scope) {
   return new Symbol(idName, scope, idType, datatype, false, 0, paramList);
 }
 
+void SymbolTable::parseDeclarators(TokenNode **rootToken,
+                                      Symbol *rootDeclarator) {
+  std::string idName{};
+  TokenType idType = rootDeclarator->identifierType();
+  TokenType datatype = rootDeclarator->datatype();
+  bool isArray = rootDeclarator->isArray();
+  size_t arraySize = rootDeclarator->arraySize();
+  size_t scope = rootDeclarator->scope();
+  TokenNode *currToken = *rootToken;
+  Symbol *currDelcarator = rootDeclarator;
+
+  while (currToken->type != TokenType::SEMICOLON) {
+    if (isIdentifier(currToken->type)) {
+      if (isKeyword(currToken->type)) {
+        throwSyntaxError(currToken, "Unexpected keyword token.");
+      }
+      // Create a new symbol using the rootDeclarator data (except name)
+      // and append it as a sibling of rootDeclarator
+      currDelcarator->_sibling = new Symbol(currToken->lexeme, scope, idType,
+                                            datatype, isArray, arraySize);
+      currDelcarator = currDelcarator->_sibling;
+    } else if (currToken->type != TokenType::COMMA) {
+      throwSyntaxError(currToken,
+                       "Unknown token; expected COMMA, got " +
+                           std::string(typeToCString(currToken->type)) + ".");
+    }
+    currToken = currToken->sibling;
+  }
+
+  *rootToken = currToken;
+}
+
 Symbol *SymbolTable::parseDatatype(TokenNode **root, size_t scope) {
   TokenType idType = TokenType::INVALID_TOKEN;
   TokenType datatype = TokenType::INVALID_TOKEN;
@@ -245,7 +287,8 @@ Symbol *SymbolTable::parseDatatype(TokenNode **root, size_t scope) {
       isArray = true;
       arraySize = parseArraySize(&curr);
       state++;
-    } else if (curr->type == TokenType::L_PAREN || curr->type == TokenType::COMMA) {
+    } else if (curr->type == TokenType::L_PAREN ||
+               curr->type == TokenType::COMMA) {
       break;
     }
     curr = curr->sibling;
@@ -279,7 +322,7 @@ Symbol *SymbolTable::parseParameterList(TokenNode **root, size_t scope) {
       } else {
         throwSyntaxError(*root, "Unexpected end of file");
       }
-    } else if(currToken->type == TokenType::COMMA) {
+    } else if (currToken->type == TokenType::COMMA) {
       return parseParameterList(&currToken->sibling, scope);
     }
     if (currToken->sibling) {
