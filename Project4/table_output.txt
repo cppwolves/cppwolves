@@ -54,3 +54,63 @@ DATATYPE_ARRAY_SIZE: 0
 DATATYPE_ARRAY_SIZE: 0
               SCOPE: 2
 
+    IDENTIFIER_NAME: ter
+           DATATYPE: CHAR
+  DATATYPE_IS_ARRAY: false
+DATATYPE_ARRAY_SIZE: 0
+              SCOPE: 2
+
+    IDENTIFIER_NAME: rospective
+           DATATYPE: INT
+  DATATYPE_IS_ARRAY: false
+DATATYPE_ARRAY_SIZE: 0
+              SCOPE: 2
+
+    IDENTIFIER_NAME: egrity
+           DATATYPE: INT
+  DATATYPE_IS_ARRAY: false
+DATATYPE_ARRAY_SIZE: 0
+              SCOPE: 2
+
+    IDENTIFIER_NAME: latan
+           DATATYPE: CHAR
+  DATATYPE_IS_ARRAY: false
+DATATYPE_ARRAY_SIZE: 0
+              SCOPE: 2
+
+    IDENTIFIER_NAME: coal
+           DATATYPE: CHAR
+  DATATYPE_IS_ARRAY: false
+DATATYPE_ARRAY_SIZE: 0
+              SCOPE: 2
+
+    IDENTIFIER_NAME: elligent
+           DATATYPE: INT
+  DATATYPE_IS_ARRAY: false
+DATATYPE_ARRAY_SIZE: 0
+              SCOPE: 2
+
+    IDENTIFIER_NAME: lean
+           DATATYPE: BOOL
+  DATATYPE_IS_ARRAY: false
+DATATYPE_ARRAY_SIZE: 0
+              SCOPE: 2
+
+    IDENTIFIER_NAME: treuse
+           DATATYPE: CHAR
+  DATATYPE_IS_ARRAY: false
+DATATYPE_ARRAY_SIZE: 0
+              SCOPE: 2
+
+    IDENTIFIER_NAME: ming
+           DATATYPE: CHAR
+  DATATYPE_IS_ARRAY: false
+DATATYPE_ARRAY_SIZE: 0
+              SCOPE: 2
+
+    IDENTIFIER_NAME: uitive
+           DATATYPE: INT
+  DATATYPE_IS_ARRAY: false
+DATATYPE_ARRAY_SIZE: 0
+              SCOPE: 2
+

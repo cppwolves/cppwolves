@@ -245,7 +245,7 @@ Symbol *SymbolTable::parseDatatype(TokenNode **root, size_t scope) {
       isArray = true;
       arraySize = parseArraySize(&curr);
       state++;
-    } else if (curr->type == TokenType::L_PAREN) {
+    } else if (curr->type == TokenType::L_PAREN || curr->type == TokenType::COMMA) {
       break;
     }
     curr = curr->sibling;
