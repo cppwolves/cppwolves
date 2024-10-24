@@ -123,16 +123,25 @@ Symbol *SymbolTable::parseFunction(TokenNode **root, size_t scope) {
         state++;
         break;
       }
+      case 2: {
+        // ( -> paramList... -> )
+        paramList = parseParameterList(&curr, scope);
+        symbol->_sibling = paramList;
+        state++;
+        break;
       }
-    } else if (curr->type == TokenType::L_PAREN && state == 2) {
-      // ( -> paramList... -> )
-      paramList = parseParameterList(&curr, scope);
-      symbol->_sibling = paramList;
-      state++;
-    } else {
-      throwSyntaxError(curr, "Unexpected symbol state");
+      default: {
+        if (curr->type == TokenType::R_PAREN) {
+          break;
+        } else {
+          throwSyntaxError(curr, "Unexpected symbol state");
+        }
+      }
+      }
     }
-    curr = curr->sibling;
+    if (curr->sibling) {
+      curr = curr->sibling;
+    }
   }
 
   if (!symbol) {
@@ -192,7 +201,9 @@ Symbol *SymbolTable::parseProcedure(TokenNode **root, size_t scope) {
       }
       } // end switch state
     }
-    curr = curr->sibling;
+    if (curr->sibling) {
+      curr = curr->sibling;
+    }
   }
   if (idType == TokenType::INVALID_TOKEN ||
       datatype == TokenType::INVALID_TOKEN || idName.empty()) {
@@ -268,8 +279,12 @@ Symbol *SymbolTable::parseParameterList(TokenNode **root, size_t scope) {
       } else {
         throwSyntaxError(*root, "Unexpected end of file");
       }
+    } else if(currToken->type == TokenType::COMMA) {
+      return parseParameterList(&currToken->sibling, scope);
     }
-    currToken = currToken->sibling;
+    if (currToken->sibling) {
+      currToken = currToken->sibling;
+    }
   }
   *root = currToken;
   return rootSymbol;
