@@ -33,6 +33,149 @@ SymbolTable::SymbolTable(CSTree *cst) : _head(nullptr), _current(nullptr) {
   parseCST(cst);
 }
 
+Symbol *SymbolTable::lookUp(const std::string &identifierName) {
+  Symbol *curr = _head;
+  while (curr) {
+    if (curr->identifierName() == identifierName) {
+      return curr;
+    }
+    curr = curr->_child;
+  }
+  return nullptr;
+}
+
+Symbol *SymbolTable::lookUp(const std::string &identifierName, TokenType type) {
+  Symbol *prev = nullptr;
+  Symbol *curr = _head;
+  while (curr) {
+    if (curr->identifierName() == identifierName &&
+        curr->identifierType() == type) {
+      return curr;
+    }
+    if (curr->_sibling) {
+      prev = curr->_sibling;
+      while (prev) {
+        if (prev->identifierName() == identifierName) {
+          return prev;
+        }
+        prev = prev->_sibling;
+      }
+    }
+    prev = curr;
+    curr = curr->_child;
+  }
+  return nullptr;
+}
+
+Symbol *SymbolTable::lookUp(const std::string &identifierName, size_t scope) {
+  Symbol *prev = nullptr;
+  Symbol *curr = _head;
+  while (curr) {
+    if (curr->scope() == scope) {
+      if (curr->identifierName() == identifierName) {
+        return curr;
+      }
+      if (curr->_sibling) {
+        prev = curr->_sibling;
+        while (prev) {
+          if (prev->identifierName() == identifierName) {
+            return prev;
+          }
+          prev = prev->_sibling;
+        }
+      }
+    }
+    prev = curr;
+    curr = curr->_child;
+  }
+  return nullptr;
+}
+
+Symbol *SymbolTable::lookUp(const std::string &identifierName, TokenType type,
+                            size_t scope) {
+  Symbol *prev = nullptr;
+  Symbol *curr = _head;
+  while (curr) {
+    if (curr->scope() == scope) {
+      if (curr->identifierName() == identifierName &&
+          curr->identifierType() == type) {
+        return curr;
+      }
+      if (curr->_sibling) {
+        prev = curr->_sibling;
+        while (prev) {
+          if (prev->identifierName() == identifierName &&
+              prev->identifierType() == type) {
+            return prev;
+          }
+          prev = prev->_sibling;
+        }
+      }
+    }
+    prev = curr;
+    curr = curr->_child;
+  }
+
+  return nullptr;
+}
+
+bool SymbolTable::containsInScope(const std::string &identifierName,
+                                  size_t scope) {
+  Symbol *prev = nullptr;
+  Symbol *curr = _head;
+
+  while (curr) {
+    if (curr->scope() == scope) {
+      if (curr->identifierName() == identifierName) {
+        return true;
+      }
+      if (curr->_sibling) {
+        prev = curr->_sibling;
+        while (prev) {
+          if (prev->identifierName() == identifierName) {
+            return true;
+          }
+          prev = prev->_sibling;
+        }
+      }
+    }
+    prev = curr;
+    curr = curr->_child;
+  }
+
+  return false;
+}
+
+bool SymbolTable::containsInScope(const std::string &identifierName,
+                                  TokenType type, size_t scope) {
+  Symbol *prev = nullptr;
+  Symbol *curr = _head;
+
+  while (curr) {
+    if (curr->scope() == scope) {
+
+      if (curr->identifierName() == identifierName &&
+          curr->identifierType() == type) {
+        return true;
+      }
+      if (curr->_sibling) {
+        prev = curr->_sibling;
+        while (prev) {
+          if (prev->identifierName() == identifierName &&
+              prev->identifierType() == type) {
+            return true;
+          }
+          prev = prev->_sibling;
+        }
+      }
+    }
+    prev = curr;
+    curr = curr->_child;
+  }
+
+  return false;
+}
+
 void SymbolTable::parseCST(CSTree *cst) {
   TokenNode *currToken = cst->head();
   std::stack<Scope> scopeStack;
@@ -56,27 +199,6 @@ void SymbolTable::parseCST(CSTree *cst) {
         currToken = currToken->child;
         break;
       }
-      case TokenType::L_BRACE: {
-        // Update next candidate scope
-        scopeStack.emplace(nextScope++, false);
-        break;
-      }
-      case TokenType::R_BRACE: {
-        // Pop scope from the stack regardless of current scope
-        Scope last = scopeStack.top();
-        scopeStack.pop();
-        if (!last.used) {
-          // No symbol was added in this scope
-          if (_current && last.value < _current->_scope) {
-            // Set to max scope + 1
-            nextScope = _current->_scope + 1;
-          } else {
-            // Set to last unused scope
-            nextScope = last.value;
-          }
-        }
-        break;
-      }
       default: {
         if (isDataType(currToken->type)) {
           // This is a new scope (not function or procedure)
@@ -86,8 +208,8 @@ void SymbolTable::parseCST(CSTree *cst) {
           Symbol *datatype = parseDatatype(&currToken, scopeStack.top().value);
           addChild(datatype);
           if (currToken->type == TokenType::COMMA && currToken->sibling) {
-            // This is a declarator list: int i, j, k; (pass `int i` and append
-            // symbols of its siblings)
+            // This is a declarator list: int i, j, k; (pass `int i` and
+            // append symbols of its siblings)
             parseDeclarators(&currToken, datatype);
             while (datatype->_sibling) {
               Symbol *next = datatype->_sibling;
@@ -104,9 +226,28 @@ void SymbolTable::parseCST(CSTree *cst) {
         }
       }
       } // end switch type
+    } else if (currToken->type == TokenType::L_BRACE) {
+      // Update next candidate scope
+      scopeStack.emplace(nextScope++, false);
+    } else if (currToken->type == TokenType::R_BRACE) {
+      // Pop scope from the stack regardless of current scope
+      Scope last = scopeStack.top();
+      scopeStack.pop();
+      if (!last.used) {
+        // No symbol was added in this scope
+        if (_current && last.value < _current->_scope) {
+          // Set to max scope + 1
+          nextScope = _current->_scope + 1;
+        } else {
+          // Set to last unused scope
+          nextScope = last.value;
+        }
+      }
     }
     currToken = currToken->child;
   }
+  assert(scopeStack.size() == 1 && scopeStack.top().value == 0 &&
+         "Scope stack is not correctly algined");
 }
 
 Symbol *SymbolTable::parseFunction(TokenNode **root, size_t scope) {
@@ -129,6 +270,7 @@ Symbol *SymbolTable::parseFunction(TokenNode **root, size_t scope) {
       }
       case 1: {
         symbol = parseDatatype(&curr, scope);
+        validateFunctionNotDefined(symbol->identifierName(), *root);
         symbol->_idType = TokenType::FUNCTION;
         state++;
         break;
@@ -186,6 +328,7 @@ Symbol *SymbolTable::parseProcedure(TokenNode **root, size_t scope) {
       case 1: {
         // name
         idName = curr->lexeme;
+        validateProcedureNotDefined(idName, *root);
         state++;
         break;
       }
@@ -224,7 +367,7 @@ Symbol *SymbolTable::parseProcedure(TokenNode **root, size_t scope) {
 }
 
 void SymbolTable::parseDeclarators(TokenNode **rootToken,
-                                      Symbol *rootDeclarator) {
+                                   Symbol *rootDeclarator) {
   std::string idName{};
   TokenType idType = rootDeclarator->identifierType();
   TokenType datatype = rootDeclarator->datatype();
@@ -241,6 +384,7 @@ void SymbolTable::parseDeclarators(TokenNode **rootToken,
       }
       // Create a new symbol using the rootDeclarator data (except name)
       // and append it as a sibling of rootDeclarator
+      validateVariableNotDefined(currToken->lexeme, currToken, scope);
       currDelcarator->_sibling = new Symbol(currToken->lexeme, scope, idType,
                                             datatype, isArray, arraySize);
       currDelcarator = currDelcarator->_sibling;
@@ -270,7 +414,7 @@ Symbol *SymbolTable::parseDatatype(TokenNode **root, size_t scope) {
       switch (state) {
       case 0: {
         // datatype
-        idType = TokenType::IDENTIFIER;
+        idType = TokenType::DATATYPE;
         datatype = curr->type;
         state++;
         break;
@@ -278,6 +422,7 @@ Symbol *SymbolTable::parseDatatype(TokenNode **root, size_t scope) {
       case 1: {
         // name
         idName = curr->lexeme;
+        validateVariableNotDefined(idName, *root, scope);
         state++;
         break;
       }
@@ -364,4 +509,31 @@ void SymbolTable::addSibling(Symbol *symbol) const {
     throw std::runtime_error("Cannot add sibling to empty list");
   }
   _current->_sibling = symbol;
+}
+
+void SymbolTable::validateFunctionNotDefined(const std::string &identifierName,
+                                             TokenNode *token) {
+  if (lookUp(identifierName, TokenType::FUNCTION)) {
+    throwError(token,
+               "function \"" + identifierName + "\" is already defined.");
+  }
+}
+
+void SymbolTable::validateProcedureNotDefined(const std::string &identifierName,
+                                              TokenNode *token) {
+  if (lookUp(identifierName, TokenType::PROCEDURE)) {
+    throwError(token,
+               "procedure \"" + identifierName + "\" is already defined.");
+  }
+}
+
+void SymbolTable::validateVariableNotDefined(const std::string &identifierName,
+                                             TokenNode *token, size_t scope) {
+  if (containsInScope(identifierName, 0)) {
+    throwError(token, "variable \"" + identifierName +
+                          "\" is already defined globally.");
+  } else if (containsInScope(identifierName, scope)) {
+    throwError(token, "variable \"" + identifierName +
+                          "\" is already defined locally.");
+  }
 }

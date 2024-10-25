@@ -23,6 +23,7 @@ enum class TokenType {
 
   // Identifiers
   IDENTIFIER,
+  DATATYPE,
 
   // Literals
   INTEGER,
@@ -154,6 +155,7 @@ static const char * typeToCString(TokenType type) {
     case TokenType::GETCHAR: return "GETCHAR";
 
     case TokenType::IDENTIFIER: return "IDENTIFIER";
+    case TokenType::DATATYPE: return "DATATYPE";
     case TokenType::INTEGER: return "INTEGER";
     case TokenType::STRING: return "STRING";
     case TokenType::CHAR_LITERAL: return "STRING";

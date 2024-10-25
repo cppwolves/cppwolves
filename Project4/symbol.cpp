@@ -12,4 +12,4 @@ Symbol::Symbol(const std::string &identifierName, size_t scope,
                size_t arraySize, Symbol *sibling, Symbol *child)
     : _idName(identifierName), _scope(scope), _idType(identifierType),
       _datatype(datatype), _isArray(isArray), _arraySize(arraySize),
-      _sibling(nullptr), _child(child) {}
+      _sibling(sibling), _child(child) {}

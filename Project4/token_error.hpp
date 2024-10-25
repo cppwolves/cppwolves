@@ -2,6 +2,11 @@
 
 #include <stdexcept>
 
+static void throwError(TokenNode *node, const std::string &message) {
+  throw std::runtime_error("Error on line " +
+                           std::to_string(node->lineNumber) + ": " + message);
+}
+
 static void throwSyntaxError(TokenNode *node, const std::string &message) {
   throw std::runtime_error("Syntax error on line " +
                            std::to_string(node->lineNumber) + ": " + message);
@@ -110,3 +115,4 @@ static void throwUnterminatedStringError(TokenNode *node) {
 static void throwUnterminatedStringError(Token token) {
   throwSyntaxError(token, "unterminated string quote.");
 }
+

@@ -1,4 +1,5 @@
 // main.cpp
+#include <cctype>
 #include <fstream>
 #include <iomanip>
 #include <ios>
@@ -10,6 +11,16 @@
 #include "token_enum.hpp"
 #include "token_node.hpp"
 #include "tokenizer.hpp"
+
+std::string toLower(const std::string &s) {
+  std::string res{};
+  for (const char &c : s) {
+    res += std::tolower(c);
+  }
+  return res;
+}
+
+std::string boolToYesNo(bool b) { return b ? "yes" : "no"; }
 
 void writeTokens(std::vector<Token> &tokens, const std::string &filename) {
   std::ofstream outputFile(filename);
@@ -110,37 +121,32 @@ void writeSymbolTable(SymbolTable *st, const std::string &filename) {
   const Symbol *symbol = st->head();
   while (symbol) {
     outputFile << std::right << std::setw(labelWidth) << "IDENTIFIER_NAME:";
-
-    // Align the value
     outputFile << std::setw(valueIndent - labelWidth) << " "
                << symbol->identifierName() << "\n";
-    outputFile << std::right << std::setw(labelWidth) << "IDENTIFIER_TYPE:";
 
-    // Align the value
+    outputFile << std::right << std::setw(labelWidth) << "IDENTIFIER_TYPE:";
     outputFile << std::setw(valueIndent - labelWidth) << " "
-               << std::string(typeToCString(symbol->identifierType())) << "\n";
+               << toLower(std::string(typeToCString(symbol->identifierType())))
+               << "\n";
 
     outputFile << std::right << std::setw(labelWidth) << "DATATYPE:";
-
-    // Align the value
-    outputFile << std::setw(valueIndent - labelWidth) << " "
-               << std::string(typeToCString(symbol->datatype())) << "\n";
+    outputFile << std::setw(valueIndent - labelWidth) << " ";
+    if (symbol->datatype() == TokenType::NOT_APPLICABLE) {
+      outputFile << "NOT APPLICABLE\n";
+    } else {
+      outputFile << toLower(std::string(typeToCString(symbol->datatype())))
+                 << "\n";
+    }
 
     outputFile << std::right << std::setw(labelWidth) << "DATATYPE_IS_ARRAY:";
-
-    // Align the value
-    outputFile << std::setw(valueIndent - labelWidth) << " " << std::boolalpha
-               << symbol->isArray() << "\n";
+    outputFile << std::setw(valueIndent - labelWidth) << " "
+               << boolToYesNo(symbol->isArray()) << "\n";
 
     outputFile << std::right << std::setw(labelWidth) << "DATATYPE_ARRAY_SIZE:";
-
-    // Align the value
     outputFile << std::setw(valueIndent - labelWidth) << " "
                << symbol->arraySize() << "\n";
 
     outputFile << std::right << std::setw(labelWidth) << "SCOPE:";
-
-    // Align the value
     outputFile << std::setw(valueIndent - labelWidth) << " " << symbol->scope()
                << "\n\n";
 
@@ -151,41 +157,34 @@ void writeSymbolTable(SymbolTable *st, const std::string &filename) {
   while (symbol) {
     const Symbol *param = symbol->sibling();
     if (param) {
-      outputFile << std::right << std::setw(labelWidth) << "PARAMETER LIST FOR:";
-      // Align the value
+      outputFile << std::right << std::setw(labelWidth)
+                 << "PARAMETER LIST FOR:";
       outputFile << std::setw(valueIndent - labelWidth) << " "
                  << symbol->identifierName() << "\n";
 
-      while(param) {
+      while (param) {
         outputFile << std::right << std::setw(labelWidth) << "IDENTIFIER_NAME:";
-
-        // Align the value
         outputFile << std::setw(valueIndent - labelWidth) << " "
                    << param->identifierName() << "\n";
 
         outputFile << std::right << std::setw(labelWidth) << "DATATYPE:";
-
-        // Align the value
         outputFile << std::setw(valueIndent - labelWidth) << " "
-                   << std::string(typeToCString(param->datatype())) << "\n";
+                   << toLower(std::string(typeToCString(param->datatype())))
+                   << "\n";
 
-        outputFile << std::right << std::setw(labelWidth) << "DATATYPE_IS_ARRAY:";
+        outputFile << std::right << std::setw(labelWidth)
+                   << "DATATYPE_IS_ARRAY:";
+        outputFile << std::setw(valueIndent - labelWidth) << " "
+                   << boolToYesNo(param->isArray()) << "\n";
 
-        // Align the value
-        outputFile << std::setw(valueIndent - labelWidth) << " " << std::boolalpha
-                   << param->isArray() << "\n";
-
-        outputFile << std::right << std::setw(labelWidth) << "DATATYPE_ARRAY_SIZE:";
-
-        // Align the value
+        outputFile << std::right << std::setw(labelWidth)
+                   << "DATATYPE_ARRAY_SIZE:";
         outputFile << std::setw(valueIndent - labelWidth) << " "
                    << param->arraySize() << "\n";
 
         outputFile << std::right << std::setw(labelWidth) << "SCOPE:";
-
-        // Align the value
-        outputFile << std::setw(valueIndent - labelWidth) << " " << param->scope()
-                   << "\n\n";
+        outputFile << std::setw(valueIndent - labelWidth) << " "
+                   << param->scope() << "\n\n";
 
         param = param->sibling();
       }
