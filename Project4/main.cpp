@@ -7,7 +7,7 @@
 #include <stdexcept>
 
 #include "cst.hpp"
-#include "table.hpp"
+#include "symbol_table.hpp"
 #include "token_enum.hpp"
 #include "token_node.hpp"
 #include "tokenizer.hpp"
@@ -118,78 +118,78 @@ void writeSymbolTable(SymbolTable *st, const std::string &filename) {
   const int labelWidth = 20;  // Width for the label column
   const int valueIndent = 20; // Indentation for the value column
 
-  const Symbol *symbol = st->head();
+  const SymbolTableListNode *symbol = st->head();
   while (symbol) {
     outputFile << std::right << std::setw(labelWidth) << "IDENTIFIER_NAME:";
     outputFile << std::setw(valueIndent - labelWidth) << " "
-               << symbol->identifierName() << "\n";
+               << symbol->identifierName << "\n";
 
     outputFile << std::right << std::setw(labelWidth) << "IDENTIFIER_TYPE:";
     outputFile << std::setw(valueIndent - labelWidth) << " "
-               << toLower(std::string(typeToCString(symbol->identifierType())))
+               << toLower(std::string(typeToCString(symbol->identifierType)))
                << "\n";
 
     outputFile << std::right << std::setw(labelWidth) << "DATATYPE:";
     outputFile << std::setw(valueIndent - labelWidth) << " ";
-    if (symbol->datatype() == TokenType::NOT_APPLICABLE) {
+    if (symbol->datatype == TokenType::NOT_APPLICABLE) {
       outputFile << "NOT APPLICABLE\n";
     } else {
-      outputFile << toLower(std::string(typeToCString(symbol->datatype())))
+      outputFile << toLower(std::string(typeToCString(symbol->datatype)))
                  << "\n";
     }
 
     outputFile << std::right << std::setw(labelWidth) << "DATATYPE_IS_ARRAY:";
     outputFile << std::setw(valueIndent - labelWidth) << " "
-               << boolToYesNo(symbol->isArray()) << "\n";
+               << boolToYesNo(symbol->isArray) << "\n";
 
     outputFile << std::right << std::setw(labelWidth) << "DATATYPE_ARRAY_SIZE:";
     outputFile << std::setw(valueIndent - labelWidth) << " "
-               << symbol->arraySize() << "\n";
+               << symbol->arraySize << "\n";
 
     outputFile << std::right << std::setw(labelWidth) << "SCOPE:";
-    outputFile << std::setw(valueIndent - labelWidth) << " " << symbol->scope()
+    outputFile << std::setw(valueIndent - labelWidth) << " " << symbol->scope
                << "\n\n";
 
-    symbol = symbol->child();
+    symbol = symbol->next;
   }
 
   symbol = st->head();
   while (symbol) {
-    const Symbol *param = symbol->sibling();
+    const SymbolTableListNode *param = symbol->parameterList;
     if (param) {
       outputFile << std::right << std::setw(labelWidth)
                  << "PARAMETER LIST FOR:";
       outputFile << std::setw(valueIndent - labelWidth) << " "
-                 << symbol->identifierName() << "\n";
+                 << symbol->identifierName << "\n";
 
       while (param) {
         outputFile << std::right << std::setw(labelWidth) << "IDENTIFIER_NAME:";
         outputFile << std::setw(valueIndent - labelWidth) << " "
-                   << param->identifierName() << "\n";
+                   << param->identifierName << "\n";
 
         outputFile << std::right << std::setw(labelWidth) << "DATATYPE:";
         outputFile << std::setw(valueIndent - labelWidth) << " "
-                   << toLower(std::string(typeToCString(param->datatype())))
+                   << toLower(std::string(typeToCString(param->datatype)))
                    << "\n";
 
         outputFile << std::right << std::setw(labelWidth)
                    << "DATATYPE_IS_ARRAY:";
         outputFile << std::setw(valueIndent - labelWidth) << " "
-                   << boolToYesNo(param->isArray()) << "\n";
+                   << boolToYesNo(param->isArray) << "\n";
 
         outputFile << std::right << std::setw(labelWidth)
                    << "DATATYPE_ARRAY_SIZE:";
         outputFile << std::setw(valueIndent - labelWidth) << " "
-                   << param->arraySize() << "\n";
+                   << param->arraySize << "\n";
 
         outputFile << std::right << std::setw(labelWidth) << "SCOPE:";
         outputFile << std::setw(valueIndent - labelWidth) << " "
-                   << param->scope() << "\n\n";
+                   << param->scope << "\n\n";
 
-        param = param->sibling();
+        param = param->next;
       }
     }
-    symbol = symbol->child();
+    symbol = symbol->next;
   }
 
   std::cout << "Output saved to '" << filename << "'\n";
@@ -218,11 +218,11 @@ int main(int argc, char *argv[]) {
       } else {
         writeCST(tree, "cst_output.txt");
 
-        SymbolTable *table = new SymbolTable(tree);
-        if (!table) {
+        SymbolTable *symbolTable = new SymbolTable(tree);
+        if (!symbolTable) {
           std::cout << "SymbolTable is empty\n";
         } else {
-          writeSymbolTable(table, "table_output.txt");
+          writeSymbolTable(symbolTable, "symbol_table_output.txt");
         }
       }
     }
