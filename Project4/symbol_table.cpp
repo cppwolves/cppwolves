@@ -1,23 +1,12 @@
 #include "symbol_table.hpp"
 #include "cst.hpp"
+#include "symbol_table_list_node.hpp"
 #include "token_enum.hpp"
 #include "token_error.hpp"
 #include "token_node.hpp"
 #include <cassert>
 
-/*
-
-SymbolTableNode:
-  std::string &identifierName
-  size_t scope
-  TokenType identifierType
-  TokenType datatype
-  bool isArray
-  size_t arraySize
-  SymbolTableNode *sibling
-  SymbolTableNode *child
-
-*/
+typedef SymbolTableListNode SymbolNode;
 
 struct Scope {
   Scope(int val, bool used) : value(val), used(used) {}
@@ -33,145 +22,65 @@ SymbolTable::SymbolTable(CSTree *cst)
 SymbolTable::~SymbolTable() {
   _currentSymbol = _tableHead;
   while (_currentSymbol) {
-    SymbolTableListNode *next = _currentSymbol->next;
+    SymbolNode *next = _currentSymbol->next();
     delete _currentSymbol;
     _currentSymbol = next;
   }
 }
 
-SymbolTableListNode *
-SymbolTable::lookUp(const std::string &identifierName) const {
-  SymbolTableListNode *curr = _tableHead;
-  while (curr) {
-    if (curr->identifierName == identifierName) {
-      return curr;
-    }
-    curr = curr->next;
-  }
-  return nullptr;
-}
+SymbolNode *SymbolTable::find(const std::string &identifierName, int scope,
+                              TokenType type) const {
+  bool allScopes = scope < 0;
+  bool findFirst = type == TokenType::DEFAULT;
+  SymbolNode *curr = _tableHead;
 
-SymbolTableListNode *SymbolTable::lookUp(const std::string &identifierName,
-                                         TokenType type) const {
-  if (!_tableHead) {
-    return nullptr;
-  }
-  SymbolTableListNode *curr = _tableHead;
   while (curr) {
-    if (curr->identifierName == identifierName &&
-        curr->identifierType == type) {
-      return curr;
-    }
-    if (curr->parameterList) {
-      SymbolTableListNode *param = curr->parameterList;
-      while (param) {
-        if (param->identifierName == identifierName) {
-          return param;
-        }
-        param = param->next;
-      }
-    }
-    curr = curr->next;
-  }
-  return nullptr;
-}
-
-SymbolTableListNode *SymbolTable::lookUp(const std::string &identifierName,
-                                         size_t scope) const {
-  SymbolTableListNode *curr = _tableHead;
-  while (curr) {
-    if (curr->scope == scope) {
-      if (curr->identifierName == identifierName) {
-        return curr;
-      }
-      if (curr->parameterList) {
-        SymbolTableListNode *param = curr->parameterList;
-        while (param) {
-          if (param->identifierName == identifierName) {
-            return param;
-          }
-          param = param->next;
-        }
-      }
-    }
-    curr = curr->next;
-  }
-  return nullptr;
-}
-
-SymbolTableListNode *SymbolTable::lookUp(const std::string &identifierName,
-                                         TokenType type, size_t scope) const {
-  SymbolTableListNode *curr = _tableHead;
-  while (curr) {
-    if (curr->scope == scope) {
+    if (allScopes || curr->scope == scope) {
       if (curr->identifierName == identifierName &&
-          curr->identifierType == type) {
+          (findFirst || curr->identifierType == type)) {
         return curr;
       }
       if (curr->parameterList) {
-        SymbolTableListNode *param = curr->parameterList;
+        SymbolNode *param = curr->parameterList;
         while (param) {
           if (param->identifierName == identifierName &&
               param->identifierType == type) {
             return param;
           }
-          param = param->next;
+          param = param->next();
         }
       }
     }
-    curr = curr->next;
+    curr = curr->next();
   }
 
   return nullptr;
 }
 
-bool SymbolTable::containsInScope(const std::string &identifierName,
-                                  size_t scope) const {
-  SymbolTableListNode *curr = _tableHead;
+bool SymbolTable::contains(const std::string &identifierName, int scope,
+                           TokenType type) const {
+  bool allScopes = scope < 0;
+  bool findFirst = type == TokenType::DEFAULT;
+  SymbolNode *curr = _tableHead;
 
   while (curr) {
-    if (curr->scope == scope) {
-      if (curr->identifierName == identifierName) {
-        return true;
-      }
-      if (curr->parameterList) {
-        SymbolTableListNode *param = curr->parameterList;
-        while (param) {
-          if (param->identifierName == identifierName) {
-            return true;
-          }
-          param = param->next;
-        }
-      }
-    }
-    curr = curr->next;
-  }
-
-  return false;
-}
-
-bool SymbolTable::containsInScope(const std::string &identifierName,
-                                  TokenType type, size_t scope) const {
-  SymbolTableListNode *curr = _tableHead;
-
-  while (curr) {
-    if (curr->scope == scope) {
+    if (allScopes || curr->scope == scope) {
       if (curr->identifierName == identifierName &&
-          curr->identifierType == type) {
+          (findFirst || curr->identifierType == type)) {
         return true;
       }
       if (curr->parameterList) {
-        SymbolTableListNode *param = curr->parameterList;
+        SymbolNode *param = curr->parameterList;
         while (param) {
           if (param->identifierName == identifierName &&
-              param->identifierType == type) {
+              (findFirst || param->identifierType == type)) {
             return true;
           }
-          param = param->next;
+          param = param->next();
         }
       }
     }
-    curr = curr->next;
+    curr = curr->next();
   }
 
   return false;
@@ -250,11 +159,11 @@ void SymbolTable::parseCST(CSTree *cst) {
          "Scope stack is not correctly algined");
 }
 
-SymbolTableListNode *SymbolTable::parseFunction(TokenNode **rootToken,
-                                                size_t scope) const {
+SymbolNode *SymbolTable::parseFunction(TokenNode **rootToken,
+                                       size_t scope) const {
   TokenNode *currToken = *rootToken;
-  SymbolTableListNode *symbol = nullptr;
-  SymbolTableListNode *paramList = nullptr;
+  SymbolNode *symbol = nullptr;
+  SymbolNode *paramList = nullptr;
   int state = 0;
 
   // function datatype+name ( paramList... )
@@ -306,15 +215,15 @@ SymbolTableListNode *SymbolTable::parseFunction(TokenNode **rootToken,
   return symbol;
 }
 
-SymbolTableListNode *SymbolTable::parseProcedure(TokenNode **rootToken,
-                                                 size_t scope) const {
+SymbolNode *SymbolTable::parseProcedure(TokenNode **rootToken,
+                                        size_t scope) const {
   TokenNode *currToken = *rootToken;
 
   // Symbol data
   TokenType idType = TokenType::INVALID_TOKEN;
   TokenType datatype = TokenType::INVALID_TOKEN;
   std::string idName{};
-  SymbolTableListNode *paramList = nullptr;
+  SymbolNode *paramList = nullptr;
   int state = 0;
 
   // procedure name ( void | paramList... )
@@ -370,19 +279,18 @@ SymbolTableListNode *SymbolTable::parseProcedure(TokenNode **rootToken,
   }
   *rootToken = currToken;
 
-  SymbolTableListNode *symbol =
-      new SymbolTableListNode(idName, scope, idType, datatype, false, 0);
+  SymbolNode *symbol =
+      new SymbolNode(idName, scope, idType, datatype, false, 0);
   symbol->addParameter(paramList);
 
   return symbol;
 }
 
-SymbolTableListNode *
-SymbolTable::parseDeclaratorList(TokenNode **rootToken,
-                                 SymbolTableListNode *rootDeclarator) const {
+SymbolNode *SymbolTable::parseDeclaratorList(TokenNode **rootToken,
+                                             SymbolNode *rootDeclarator) const {
   TokenNode *currToken = *rootToken;
-  SymbolTableListNode *headDeclarator = nullptr;
-  SymbolTableListNode *currDeclarator = nullptr;
+  SymbolNode *headDeclarator = nullptr;
+  SymbolNode *currDeclarator = nullptr;
 
   // Symbol data
   std::string idName{};
@@ -401,8 +309,8 @@ SymbolTable::parseDeclaratorList(TokenNode **rootToken,
 
       // Create the next symbol using the rootDeclarator data (except name)
       // and add it to the declarator list
-      SymbolTableListNode *next = new SymbolTableListNode(
-          currToken->lexeme, scope, idType, datatype, isArray, arraySize);
+      SymbolNode *next = new SymbolNode(currToken->lexeme, scope, idType,
+                                        datatype, isArray, arraySize);
 
       if (!headDeclarator) {
         headDeclarator = next;
@@ -423,8 +331,8 @@ SymbolTable::parseDeclaratorList(TokenNode **rootToken,
   return headDeclarator;
 }
 
-SymbolTableListNode *SymbolTable::parseDatatype(TokenNode **rootToken,
-                                                size_t scope) const {
+SymbolNode *SymbolTable::parseDatatype(TokenNode **rootToken,
+                                       size_t scope) const {
   TokenNode *currToken = *rootToken;
 
   // Symbol data
@@ -472,22 +380,21 @@ SymbolTableListNode *SymbolTable::parseDatatype(TokenNode **rootToken,
   }
 
   *rootToken = currToken;
-  return new SymbolTableListNode(idName, scope, idType, datatype, isArray,
-                                 arraySize);
+  return new SymbolNode(idName, scope, idType, datatype, isArray, arraySize);
 }
 
-SymbolTableListNode *SymbolTable::parseParameterList(TokenNode **rootToken,
-                                                     size_t scope) const {
+SymbolNode *SymbolTable::parseParameterList(TokenNode **rootToken,
+                                            size_t scope) const {
   TokenNode *currToken = *rootToken;
-  SymbolTableListNode *paramList = nullptr;
-  SymbolTableListNode *currParam = nullptr;
+  SymbolNode *paramList = nullptr;
+  SymbolNode *currParam = nullptr;
 
   while (currToken && currToken->sibling) {
     if (currToken->type == TokenType::R_PAREN) {
       break;
     }
     if (isDataType(currToken->type)) {
-      SymbolTableListNode *next = parseDatatype(&currToken, scope);
+      SymbolNode *next = parseDatatype(&currToken, scope);
       if (!paramList) {
         paramList = next;
         currParam = paramList;
@@ -524,21 +431,21 @@ size_t SymbolTable::parseArraySize(TokenNode **rootToken) const {
   return size;
 }
 
-void SymbolTable::addNext(SymbolTableListNode *symbol) {
+void SymbolTable::addNext(SymbolNode *symbol) {
   if (!_tableHead) {
     _tableHead = symbol;
     _currentSymbol = _tableHead;
   } else {
     _currentSymbol = _currentSymbol->link(symbol);
   }
-  if (!_currentSymbol->next) {
+  if (!_currentSymbol->next()) {
     _tableTail = _currentSymbol;
   }
 }
 
 void SymbolTable::validateFunctionNotDefined(const std::string &identifierName,
                                              TokenNode *token) const {
-  if (lookUp(identifierName, TokenType::FUNCTION)) {
+  if (find(identifierName, -1, TokenType::FUNCTION)) {
     throwError(token,
                "function \"" + identifierName + "\" is already defined.");
   }
@@ -546,7 +453,7 @@ void SymbolTable::validateFunctionNotDefined(const std::string &identifierName,
 
 void SymbolTable::validateProcedureNotDefined(const std::string &identifierName,
                                               TokenNode *token) const {
-  if (lookUp(identifierName, TokenType::PROCEDURE)) {
+  if (find(identifierName, -1, TokenType::PROCEDURE)) {
     throwError(token,
                "procedure \"" + identifierName + "\" is already defined.");
   }
@@ -555,10 +462,10 @@ void SymbolTable::validateProcedureNotDefined(const std::string &identifierName,
 void SymbolTable::validateVariableNotDefined(const std::string &identifierName,
                                              TokenNode *token,
                                              size_t scope) const {
-  if (containsInScope(identifierName, 0)) {
+  if (contains(identifierName, 0)) {
     throwError(token, "variable \"" + identifierName +
                           "\" is already defined globally.");
-  } else if (containsInScope(identifierName, scope)) {
+  } else if (contains(identifierName, scope)) {
     throwError(token, "variable \"" + identifierName +
                           "\" is already defined locally.");
   }

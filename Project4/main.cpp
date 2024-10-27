@@ -118,7 +118,7 @@ void writeSymbolTable(SymbolTable *st, const std::string &filename) {
   const int labelWidth = 20;  // Width for the label column
   const int valueIndent = 20; // Indentation for the value column
 
-  const SymbolTableListNode *symbol = st->head();
+  SymbolTableListNode *symbol = st->head();
   while (symbol) {
     outputFile << std::right << std::setw(labelWidth) << "IDENTIFIER_NAME:";
     outputFile << std::setw(valueIndent - labelWidth) << " "
@@ -150,12 +150,12 @@ void writeSymbolTable(SymbolTable *st, const std::string &filename) {
     outputFile << std::setw(valueIndent - labelWidth) << " " << symbol->scope
                << "\n\n";
 
-    symbol = symbol->next;
+    symbol = symbol->next();
   }
 
   symbol = st->head();
   while (symbol) {
-    const SymbolTableListNode *param = symbol->parameterList;
+    SymbolTableListNode *param = symbol->parameterList;
     if (param) {
       outputFile << std::right << std::setw(labelWidth)
                  << "PARAMETER LIST FOR:";
@@ -183,13 +183,13 @@ void writeSymbolTable(SymbolTable *st, const std::string &filename) {
                    << param->arraySize << "\n";
 
         outputFile << std::right << std::setw(labelWidth) << "SCOPE:";
-        outputFile << std::setw(valueIndent - labelWidth) << " "
-                   << param->scope << "\n\n";
+        outputFile << std::setw(valueIndent - labelWidth) << " " << param->scope
+                   << "\n\n";
 
-        param = param->next;
+        param = param->next();
       }
     }
-    symbol = symbol->next;
+    symbol = symbol->next();
   }
 
   std::cout << "Output saved to '" << filename << "'\n";

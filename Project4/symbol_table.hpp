@@ -2,41 +2,39 @@
 #define SYMBOL_TABLE_HPP
 
 #include "cst.hpp"
+#include "list.hpp"
 #include "symbol_table_list_node.hpp"
 #include "token_enum.hpp"
 
-class SymbolTable {
-  typedef SymbolTableListNode ListNode;
+class SymbolTable : public List<SymbolTableListNode> {
+public:
+  typedef SymbolTableListNode SymbolNode;
 
 public:
   SymbolTable(CSTree *cst);
-  ~SymbolTable();
+  virtual ~SymbolTable() override;
 
-  ListNode *head() { return _tableHead; };
-  ListNode *tail() { return _tableTail; };
+  virtual SymbolNode *head() override { return _tableHead; };
+  virtual SymbolNode *tail() override { return _tableTail; };
 
-  ListNode *lookUp(const std::string &identifierName) const;
-  ListNode *lookUp(const std::string &identifierName, TokenType type) const;
-  ListNode *lookUp(const std::string &identifierName, TokenType type,
-                   size_t scope) const;
-  ListNode *lookUp(const std::string &identifierName, size_t scope) const;
+  SymbolNode *find(const std::string &identifierName, int scope = -1,
+                   TokenType type = TokenType::DEFAULT) const;
 
-  bool containsInScope(const std::string &identifierName, size_t scope) const;
-  bool containsInScope(const std::string &identifierName, TokenType type,
-                       size_t scope) const;
+  bool contains(const std::string &identifierName, int scope = -1,
+                TokenType type = TokenType::DEFAULT) const;
 
 private:
   void parseCST(CSTree *cst);
-  void addNext(ListNode *symbol);
-  void addParameter(ListNode *symbol);
+  void addNext(SymbolNode *symbol);
+  void addParameter(SymbolNode *symbol);
 
   size_t parseArraySize(TokenNode **rootToken) const;
-  ListNode *parseFunction(TokenNode **rootToken, size_t scope) const;
-  ListNode *parseProcedure(TokenNode **rootToken, size_t scope) const;
-  ListNode *parseDatatype(TokenNode **rootToken, size_t scope) const;
-  ListNode *parseParameterList(TokenNode **rootToken, size_t scope) const;
-  ListNode *parseDeclaratorList(TokenNode **rootToken,
-                                ListNode *rootSymbol) const;
+  SymbolNode *parseFunction(TokenNode **rootToken, size_t scope) const;
+  SymbolNode *parseProcedure(TokenNode **rootToken, size_t scope) const;
+  SymbolNode *parseDatatype(TokenNode **rootToken, size_t scope) const;
+  SymbolNode *parseParameterList(TokenNode **rootToken, size_t scope) const;
+  SymbolNode *parseDeclaratorList(TokenNode **rootToken,
+                                  SymbolNode *rootSymbol) const;
 
   // Exceptions
 private:
@@ -48,9 +46,9 @@ private:
                                   TokenNode *token, size_t scope) const;
 
 private:
-  ListNode *_tableHead;
-  ListNode *_tableTail;
-  ListNode *_currentSymbol;
+  SymbolNode *_tableHead;
+  SymbolNode *_tableTail;
+  SymbolNode *_currentSymbol;
 };
 
 #endif // SYMBOL_TABLE_HPP
