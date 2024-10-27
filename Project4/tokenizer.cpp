@@ -2,51 +2,50 @@
 #include "tokenizer.hpp"
 #include "token_enum.hpp"
 #include "token_error.hpp"
-#include "token_node.hpp"
 #include <cctype>
 #include <unordered_set>
 
 Tokenizer::Tokenizer(const std::string &filename)
-    : lineNumber(1), endOfFile(false) {
-  inputFile.open(filename);
-  if (!inputFile.is_open()) {
+    : _lineNumber(1), _endOfFile(false) {
+  _inputFile.open(filename);
+  if (!_inputFile.is_open()) {
     throw std::runtime_error("Could not open file " + filename);
   }
   advance(); // Initialize currentChar
 }
 
 void Tokenizer::advance() {
-  if (inputFile.get(currentChar)) {
-    if (currentChar == '\n') {
-      lineNumber++;
+  if (_inputFile.get(_currentChar)) {
+    if (_currentChar == '\n') {
+      _lineNumber++;
     }
   } else {
-    endOfFile = true;
+    _endOfFile = true;
   }
 }
 
 void Tokenizer::skipWhitespace() {
-  while (!endOfFile && std::isspace(currentChar)) {
+  while (!_endOfFile && std::isspace(_currentChar)) {
     advance();
   }
 }
 
 void Tokenizer::skipComment() {
   // Single-line or multi-line comments
-  if (currentChar == '/') {
+  if (_currentChar == '/') {
     advance();
-    if (currentChar == '/') {
+    if (_currentChar == '/') {
       // Single-line comment
-      while (!endOfFile && currentChar != '\n') {
+      while (!_endOfFile && _currentChar != '\n') {
         advance();
       }
-    } else if (currentChar == '*') {
+    } else if (_currentChar == '*') {
       // Multi-line comment
       advance();
-      while (!endOfFile) {
-        if (currentChar == '*') {
+      while (!_endOfFile) {
+        if (_currentChar == '*') {
           advance();
-          if (currentChar == '/') {
+          if (_currentChar == '/') {
             advance();
             break;
           }
@@ -56,8 +55,8 @@ void Tokenizer::skipComment() {
       }
     } else {
       // Not a comment, return to previous position
-      inputFile.unget();
-      currentChar = '/';
+      _inputFile.unget();
+      _currentChar = '/';
     }
   }
 }
@@ -88,10 +87,10 @@ bool Tokenizer::isOperatorChar(char ch) {
 
 Token Tokenizer::identifierOrKeyword() {
   std::string lexeme;
-  int startLine = lineNumber;
+  int startLine = _lineNumber;
 
-  while (!endOfFile && (isLetter(currentChar) || isDigit(currentChar))) {
-    lexeme += currentChar;
+  while (!_endOfFile && (isLetter(_currentChar) || isDigit(_currentChar))) {
+    lexeme += _currentChar;
     advance();
   }
 
@@ -139,35 +138,35 @@ Token Tokenizer::identifierOrKeyword() {
 
 Token Tokenizer::number() {
   std::string lexeme;
-  int startLine = lineNumber;
+  int startLine = _lineNumber;
 
   // Handle optional leading sign
-  if (currentChar == '+' || currentChar == '-') {
-    lexeme += currentChar;
+  if (_currentChar == '+' || _currentChar == '-') {
+    lexeme += _currentChar;
     advance();
-    if (!isDigit(currentChar)) {
+    if (!isDigit(_currentChar)) {
       // Sign not followed by a digit; invalid number
       return Token(TokenType::INVALID_TOKEN, lexeme, startLine);
     }
   }
 
-  if (!isDigit(currentChar)) {
+  if (!isDigit(_currentChar)) {
     // Invalid integer
-    lexeme += currentChar;
+    lexeme += _currentChar;
     advance();
     return Token(TokenType::INVALID_TOKEN, lexeme, startLine);
   }
 
-  while (!endOfFile && isDigit(currentChar)) {
-    lexeme += currentChar;
+  while (!_endOfFile && isDigit(_currentChar)) {
+    lexeme += _currentChar;
     advance();
   }
 
   // Check for invalid characters after digits
-  if (isLetter(currentChar)) {
+  if (isLetter(_currentChar)) {
     // Invalid integer: contains letters after digits
-    while (!endOfFile && (isLetter(currentChar) || isDigit(currentChar))) {
-      lexeme += currentChar;
+    while (!_endOfFile && (isLetter(_currentChar) || isDigit(_currentChar))) {
+      lexeme += _currentChar;
       advance();
     }
     // Return an invalid token with the full lexeme
@@ -179,28 +178,28 @@ Token Tokenizer::number() {
 
 Token Tokenizer::stringLiteral() {
   std::string lexeme;
-  int startLine = lineNumber;
-  char quoteType = currentChar; // ' or "
-  lexeme += currentChar;        // Include the starting quote
+  int startLine = _lineNumber;
+  char quoteType = _currentChar; // ' or "
+  lexeme += _currentChar;        // Include the starting quote
   advance();
 
-  while (!endOfFile && currentChar != quoteType) {
-    if (currentChar == '\\') {
+  while (!_endOfFile && _currentChar != quoteType) {
+    if (_currentChar == '\\') {
       // Handle escape sequence
-      lexeme += currentChar;
+      lexeme += _currentChar;
       advance();
-      if (!endOfFile) {
-        lexeme += currentChar;
+      if (!_endOfFile) {
+        lexeme += _currentChar;
         advance();
       }
     } else {
-      lexeme += currentChar;
+      lexeme += _currentChar;
       advance();
     }
   }
 
-  if (currentChar == quoteType) {
-    lexeme += currentChar; // Include the closing quote
+  if (_currentChar == quoteType) {
+    lexeme += _currentChar; // Include the closing quote
     advance();
     TokenType type =
         (quoteType == '"') ? TokenType::STRING : TokenType::CHAR_LITERAL;
@@ -214,17 +213,17 @@ Token Tokenizer::stringLiteral() {
 Token Tokenizer::charLiteral() { return stringLiteral(); }
 
 Token Tokenizer::operatorOrDelimiter() {
-  int startLine = lineNumber;
+  int startLine = _lineNumber;
   std::string lexeme;
-  lexeme += currentChar;
-  char firstChar = currentChar;
+  lexeme += _currentChar;
+  char firstChar = _currentChar;
 
   // Handle two-character operators
-  if (currentChar == '=' || currentChar == '!' || currentChar == '<' ||
-      currentChar == '>') {
+  if (_currentChar == '=' || _currentChar == '!' || _currentChar == '<' ||
+      _currentChar == '>') {
     advance();
-    if (currentChar == '=') {
-      lexeme += currentChar;
+    if (_currentChar == '=') {
+      lexeme += _currentChar;
       advance();
       if (lexeme == "==")
         return Token(TokenType::BOOLEAN_EQUAL, lexeme, startLine);
@@ -248,10 +247,10 @@ Token Tokenizer::operatorOrDelimiter() {
       // inputFile.unget();
       return Token(TokenType::INVALID_TOKEN, lexeme, startLine);
     }
-  } else if (currentChar == '&' || currentChar == '|') {
+  } else if (_currentChar == '&' || _currentChar == '|') {
     advance();
-    if (currentChar == firstChar) {
-      lexeme += currentChar;
+    if (_currentChar == firstChar) {
+      lexeme += _currentChar;
       advance();
       if (lexeme == "&&")
         return Token(TokenType::BOOLEAN_AND, lexeme, startLine);
@@ -330,56 +329,56 @@ Token Tokenizer::operatorOrDelimiter() {
 
 Token Tokenizer::getNextToken() {
   // If there are tokens in the queue, return the next one
-  if (!tokenQueue.empty()) {
-    Token token = tokenQueue.front();
-    tokenQueue.pop();
+  if (!_tokenQueue.empty()) {
+    Token token = _tokenQueue.front();
+    _tokenQueue.pop();
     return token;
   }
 
   skipWhitespace();
 
-  while (!endOfFile && currentChar == '/') {
+  while (!_endOfFile && _currentChar == '/') {
     // Possible comment
     advance();
-    if (currentChar == '/' || currentChar == '*') {
-      inputFile.unget();
-      currentChar = '/';
+    if (_currentChar == '/' || _currentChar == '*') {
+      _inputFile.unget();
+      _currentChar = '/';
       skipComment();
       skipWhitespace();
     } else {
-      inputFile.unget();
-      currentChar = '/';
+      _inputFile.unget();
+      _currentChar = '/';
       break;
     }
   }
 
-  if (endOfFile) {
-    return Token(TokenType::END_OF_FILE, "", lineNumber);
+  if (_endOfFile) {
+    return Token(TokenType::END_OF_FILE, "", _lineNumber);
   }
 
-  if (isLetter(currentChar) || currentChar == '_') {
+  if (isLetter(_currentChar) || _currentChar == '_') {
     return identifierOrKeyword();
   }
 
-  if (isDigit(currentChar)) {
+  if (isDigit(_currentChar)) {
     return number();
   }
 
-  if (currentChar == '+' || currentChar == '-') {
+  if (_currentChar == '+' || _currentChar == '-') {
     // Determine if this is a number or an operator
-    char nextChar = inputFile.peek();
+    char nextChar = _inputFile.peek();
     if (isDigit(nextChar) &&
-        (tokens.empty() || (tokens.back().type != TokenType::INTEGER))) {
+        (_tokens.empty() || (_tokens.back().type != TokenType::INTEGER))) {
       return number();
     } else {
       return operatorOrDelimiter();
     }
   }
 
-  if (currentChar == '"' || currentChar == '\'') {
+  if (_currentChar == '"' || _currentChar == '\'') {
     // Handle string or char literal
-    char quoteType = currentChar;
-    int startLine = lineNumber;
+    char quoteType = _currentChar;
+    int startLine = _lineNumber;
 
     // Create token for opening quote
     TokenType quoteTokenType =
@@ -390,22 +389,22 @@ Token Tokenizer::getNextToken() {
 
     // Now read the string content
     std::string lexeme;
-    while (!endOfFile && currentChar != quoteType) {
-      if (currentChar == '\\') {
+    while (!_endOfFile && _currentChar != quoteType) {
+      if (_currentChar == '\\') {
         // Handle escape sequence
-        lexeme += currentChar;
+        lexeme += _currentChar;
         advance();
-        if (!endOfFile) {
-          lexeme += currentChar;
+        if (!_endOfFile) {
+          lexeme += _currentChar;
           advance();
         }
       } else {
-        lexeme += currentChar;
+        lexeme += _currentChar;
         advance();
       }
     }
 
-    if (currentChar == quoteType) {
+    if (_currentChar == quoteType) {
       // Create token for string content
       TokenType contentTokenType =
           (quoteType == '"') ? TokenType::STRING : TokenType::CHAR_LITERAL;
@@ -413,12 +412,12 @@ Token Tokenizer::getNextToken() {
 
       // Create token for closing quote
       Token closingQuoteToken(quoteTokenType, std::string(1, quoteType),
-                              lineNumber);
+                              _lineNumber);
       advance(); // Move past closing quote
 
       // Enqueue the tokens to the tokenQueue
-      tokenQueue.push(contentToken);
-      tokenQueue.push(closingQuoteToken);
+      _tokenQueue.push(contentToken);
+      _tokenQueue.push(closingQuoteToken);
 
       // Return the opening quote token
       return openingQuoteToken;
@@ -430,19 +429,21 @@ Token Tokenizer::getNextToken() {
     }
   }
 
-  if (isOperatorChar(currentChar) ||
-      std::string("()[]{};,").find(currentChar) != std::string::npos) {
+  if (isOperatorChar(_currentChar) ||
+      std::string("()[]{};,").find(_currentChar) != std::string::npos) {
     return operatorOrDelimiter();
   }
 
   // Invalid character
-  std::string lexeme(1, currentChar);
-  int startLine = lineNumber;
+  std::string lexeme(1, _currentChar);
+  int startLine = _lineNumber;
   advance();
   return Token(TokenType::INVALID_TOKEN, lexeme, startLine);
 }
 
 std::vector<Token> Tokenizer::tokenize() {
+  _tokens.clear();
+
   Token token = getNextToken();
 
   while (token.type != TokenType::END_OF_FILE) {
@@ -454,12 +455,12 @@ std::vector<Token> Tokenizer::tokenize() {
       // Store the error message for later use
       this->errorMessage = errorMessage;
       // Clear the tokens vector to ensure no tokens are outputted
-      tokens.clear();
-      return tokens;
+      _tokens.clear();
+      return _tokens;
     }
-    tokens.push_back(token);
+    _tokens.push_back(token);
     token = getNextToken();
   }
 
-  return tokens;
+  return _tokens;
 }

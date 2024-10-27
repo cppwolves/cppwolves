@@ -13,14 +13,14 @@ public:
   Tokenizer(const std::string &filename);
   std::vector<Token> tokenize();
   std::string errorMessage;
-  std::queue<Token> tokenQueue;
 
 private:
-  std::vector<Token> tokens;
-  std::ifstream inputFile;
-  int lineNumber;
-  char currentChar;
-  bool endOfFile;
+  std::vector<Token> _tokens;
+  std::queue<Token> _tokenQueue;
+  std::ifstream _inputFile;
+  int _lineNumber;
+  char _currentChar;
+  bool _endOfFile;
 
   // Helper methods
   void advance();
