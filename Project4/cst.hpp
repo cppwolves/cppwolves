@@ -4,20 +4,25 @@
 #include <stack>
 #include <vector>
 
+#include "list.hpp"
 #include "token.hpp"
 #include "token_enum.hpp"
 #include "token_node.hpp"
 
-class CSTree {
+class CSTree : public List<TokenNode> {
 public:
   CSTree(std::vector<Token> &tokens);
-  TokenNode *head() { return _head; }
+  ~CSTree() override;
+
+  TokenNode *head() override { return _head; }
+  TokenNode *tail() override { return _tail; }
 
 private:
-  TokenNode *_head;
+  TokenNode *_head{nullptr};
+  TokenNode *_tail{nullptr};
 
-  TokenNode *_previous;
-  TokenNode *_current;
+  TokenNode *_previous{nullptr};
+  TokenNode *_current{nullptr};
 
   std::vector<Token>::iterator _nIt;
 
@@ -38,16 +43,18 @@ private:
 
 private:
   // Helpers
+  TokenNode *getNextToken();
   void addSiblingAndAdvance(TokenNode *node);
   void addChildAndAdvance(TokenNode *node);
   void handleOpenCloseDelimiters(TokenNode *node);
   bool isOperand(TokenNode *token);
   void revertState(TokenNode *node);
+  bool isNewLine() const;
 
 private:
-  bool _operandFlag;
-  bool _chainCheck;
-  bool _paramCheck;
+  bool _operandFlag{};
+  bool _chainCheck{};
+  bool _paramCheck{};
   std::stack<TokenType> _openStack{};
 };
 

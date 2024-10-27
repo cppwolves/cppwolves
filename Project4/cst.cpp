@@ -3,82 +3,129 @@
 #include "token_enum.hpp"
 #include "token_error.hpp"
 #include "token_node.hpp"
+#include <stdexcept>
 
 CSTree::CSTree(std::vector<Token> &tokens) {
   if (tokens.empty()) {
-    // return nullptr;
-    // deal with, what behavior?
+    throw std::invalid_argument("CSTree:CSTree: \"tokens\" cannot be empty.");
   }
-
-  _head = new TokenNode(tokens.at(0));
-  _current = _head;
 
   _nIt = tokens.begin();
 
-  for (_nIt++; _nIt != tokens.end(); _nIt++) {
+  while (_nIt != tokens.end()) {
     // First, check the next node
-    TokenNode *next = new TokenNode(*_nIt);
+    TokenNode *next = getNextToken();
     switch (next->type) {
-    // The next token is a delimiter
+      // The next token is a delimiter
     case TokenType::L_BRACE:
     case TokenType::R_BRACE:
     case TokenType::ELSE: {
       addChildAndAdvance(next);
       break;
     }
-    default:
-      // Default to the current node
-      switch (_current->type) {
-      case TokenType::FOR: {
-        isFor();
-        break;
-      }
-      case TokenType::WHILE: {
-        isWhile();
-        break;
-      }
-      case TokenType::FUNCTION: {
-        isFunction();
-        break;
-      }
-      case TokenType::PROCEDURE: {
-        isProcedure();
-        break;
-      }
-      case TokenType::INT:
-      case TokenType::CHAR:
-      case TokenType::BOOL: {
-        isDatatypeSpecifier();
-        break;
-      }
-      case TokenType::L_BRACE:
-      case TokenType::R_BRACE:
-      case TokenType::ELSE:
-      case TokenType::SEMICOLON: {
+    case TokenType::FOR: {
+      addChildAndAdvance(next);
+      isFor();
+      break;
+    }
+    case TokenType::WHILE: {
+      addChildAndAdvance(next);
+      isWhile();
+      break;
+    }
+    case TokenType::FUNCTION: {
+      addChildAndAdvance(next);
+      isFunction();
+      break;
+    }
+    case TokenType::PROCEDURE: {
+      addChildAndAdvance(next);
+      isProcedure();
+      break;
+    }
+    case TokenType::INT:
+    case TokenType::CHAR:
+    case TokenType::BOOL: {
+      if (isNewLine()) {
         addChildAndAdvance(next);
-        break;
-      }
-      default: {
+      } else {
         addSiblingAndAdvance(next);
-        break;
       }
+      isDatatypeSpecifier();
+      break;
+    }
+    default: {
+      if (isNewLine()) {
+        addChildAndAdvance(next);
+      } else {
+        addSiblingAndAdvance(next);
       }
+      break;
+    }
+    } // end switch type
+  }
+}
+
+CSTree::~CSTree() {
+  _current = _head;
+  _previous = nullptr;
+  while (_current) {
+    _previous = _current;
+    TokenNode *next = _current->sibling;
+    if (next) {
+      delete _previous;
+      while (next && next->sibling) {
+        TokenNode *temp = next->sibling;
+        delete next;
+        next = temp;
+      }
+    }
+    if (next) {
+      _current = next->child;
+      delete next;
+    } else {
+      _current = _current->child;
+      delete _previous;
     }
   }
 }
 
+bool CSTree::isNewLine() const {
+  if (_current) {
+    switch (_current->type) {
+    case TokenType::L_BRACE:
+    case TokenType::R_BRACE:
+    case TokenType::ELSE:
+    case TokenType::SEMICOLON: {
+      return true;
+    }
+    }
+  }
+  return false;
+}
+
 void CSTree::addSiblingAndAdvance(TokenNode *node) {
   handleOpenCloseDelimiters(node);
-  _current->sibling = node;
-  _previous = _current;
-  _current = node;
+  if (!_head) {
+    _head = node;
+    _current = _head;
+  } else {
+    _current->sibling = node;
+    _previous = _current;
+    _current = node;
+  }
 }
 
 void CSTree::addChildAndAdvance(TokenNode *node) {
   handleOpenCloseDelimiters(node);
-  _current->child = node;
-  _previous = _current;
-  _current = node;
+  if (!_head) {
+    _head = node;
+    _current = _head;
+  } else {
+    _current->child = node;
+    _previous = _current;
+    _current = node;
+  }
 }
 
 void CSTree::handleOpenCloseDelimiters(TokenNode *node) {
@@ -113,7 +160,7 @@ void CSTree::handleOpenCloseDelimiters(TokenNode *node) {
 }
 
 void CSTree::isFor() {
-  TokenNode *lParen = new TokenNode(*_nIt++);
+  TokenNode *lParen = getNextToken();
 
   if (lParen->type != TokenType::L_PAREN) {
     throwMissingOpeningParenthesisError(lParen);
@@ -125,7 +172,7 @@ void CSTree::isFor() {
     throwMissingInitializationExpressionError(lParen);
   }
 
-  TokenNode *semiColon = new TokenNode(*_nIt++);
+  TokenNode *semiColon = getNextToken();
   if (semiColon->type != TokenType::SEMICOLON) {
     throwMissingSemicolonError(semiColon);
   }
@@ -135,7 +182,7 @@ void CSTree::isFor() {
     throwMissingBooleanExpressionError(semiColon);
   }
 
-  TokenNode *semiColon2 = new TokenNode(*_nIt++);
+  TokenNode *semiColon2 = getNextToken();
   if (semiColon2->type != TokenType::SEMICOLON) {
     throwMissingSemicolonError(semiColon2);
   }
@@ -146,7 +193,7 @@ void CSTree::isFor() {
     throwMissingNumericalExpressionError(semiColon2);
   }
 
-  TokenNode *rParen = new TokenNode(*_nIt);
+  TokenNode *rParen = getNextToken();
   if (rParen->type != TokenType::R_PAREN) {
     throwMissingClosingParenthesisError(rParen);
   }
@@ -158,7 +205,7 @@ void CSTree::isFor() {
 }
 
 void CSTree::isWhile() {
-  TokenNode *lParen = new TokenNode(*_nIt++);
+  TokenNode *lParen = getNextToken();
 
   if (lParen->type != TokenType::L_PAREN) {
     throwMissingOpeningParenthesisError(lParen);
@@ -170,7 +217,7 @@ void CSTree::isWhile() {
     throwMissingBooleanExpressionError(lParen);
   }
 
-  TokenNode *rParen = new TokenNode(*_nIt);
+  TokenNode *rParen = getNextToken();
   if (rParen->type != TokenType::R_PAREN) {
     throwMissingClosingParenthesisError(rParen);
   }
@@ -187,7 +234,7 @@ bool CSTree::isInitializationExpression() {
   // should be before called? check BNF
 
   // must start with identifier
-  TokenNode *identifier = new TokenNode(*_nIt++);
+  TokenNode *identifier = getNextToken();
 
   if (!isIdentifier(identifier->type)) {
     throwMissingIdentifierError(identifier);
@@ -196,7 +243,7 @@ bool CSTree::isInitializationExpression() {
   addSiblingAndAdvance(identifier);
 
   // followed by assignment operator
-  TokenNode *assignmentOp = new TokenNode(*_nIt++);
+  TokenNode *assignmentOp = getNextToken();
   if (assignmentOp->type != TokenType::ASSIGNMENT_OPERATOR) {
     throwMissingAssignmentOperatorError(assignmentOp);
   }
@@ -204,7 +251,7 @@ bool CSTree::isInitializationExpression() {
   addSiblingAndAdvance(assignmentOp);
 
   // can be string OR expression
-  TokenNode *unknown = new TokenNode(*_nIt++);
+  TokenNode *unknown = getNextToken();
   if (unknown->type == TokenType::STRING) {
     _current->sibling = unknown;
     _current = unknown;
@@ -221,18 +268,17 @@ bool CSTree::isInitializationExpression() {
 
 bool CSTree::isBooleanExpression() {
   TokenNode *holderNode = _current;
-  auto holderIt = _nIt;
 
   // check if single operand,
   // if true AND next token isnt relational op - switch to boolExp case
   // checks
   if (_nIt->type == TokenType::L_PAREN) {
-    addSiblingAndAdvance(new TokenNode(*_nIt++));
+    addSiblingAndAdvance(getNextToken());
     if (isBooleanExpression()) {
       if (_nIt->type == TokenType::R_PAREN) {
-        addSiblingAndAdvance(new TokenNode(*_nIt++));
+        addSiblingAndAdvance(getNextToken());
         if (isBooleanOperator(_nIt->type)) {
-          addSiblingAndAdvance(new TokenNode(*_nIt++));
+          addSiblingAndAdvance(getNextToken());
         }
         if (_nIt->type == TokenType::SEMICOLON ||
             _nIt->type == TokenType::R_PAREN) {
@@ -248,7 +294,7 @@ bool CSTree::isBooleanExpression() {
   }
   if (isNumericalExpression() ||
       (!_operandFlag || (_operandFlag && isRelationalOperator(_nIt->type)))) {
-    TokenNode *next = new TokenNode(*_nIt++);
+    TokenNode *next = getNextToken();
 
     addSiblingAndAdvance(next);
     if (next->type == TokenType::TRUE || next->type == TokenType::FALSE) {
@@ -259,14 +305,14 @@ bool CSTree::isBooleanExpression() {
       throwMissingNumericalExpressionError(next);
     }
     if (isBooleanOperator(_nIt->type)) {
-      addSiblingAndAdvance(new TokenNode(*_nIt++));
+      addSiblingAndAdvance(getNextToken());
       return isBooleanExpression();
     }
     return true;
   } else {
     // clear tree of num, fix this mess
     revertState(holderNode);
-    TokenNode *first = new TokenNode(*_nIt++);
+    TokenNode *first = getNextToken();
 
     switch (first->type) {
     case TokenType::FALSE:
@@ -278,7 +324,7 @@ bool CSTree::isBooleanExpression() {
     }
     case TokenType::IDENTIFIER: {
       addSiblingAndAdvance(first);
-      TokenNode *second = new TokenNode(*_nIt++);
+      TokenNode *second = getNextToken();
 
       // identifier & boolean op & boolean expression (recursion)
       if (isBooleanOperator(second->type)) {
@@ -304,7 +350,7 @@ bool CSTree::isBooleanExpression() {
 
       addSiblingAndAdvance(first);
 
-      TokenNode *next = new TokenNode(*_nIt++);
+      TokenNode *next = getNextToken();
       if (next->type != TokenType::IDENTIFIER) {
         throwMissingIdentifierError(next);
       }
@@ -313,7 +359,7 @@ bool CSTree::isBooleanExpression() {
 
       addSiblingAndAdvance(next);
 
-      TokenNode *boolOp = new TokenNode(*_nIt++);
+      TokenNode *boolOp = getNextToken();
       if (!isBooleanOperator(boolOp->type)) {
         throwMissingBooleanExpressionError(boolOp);
       }
@@ -327,7 +373,7 @@ bool CSTree::isBooleanExpression() {
         throwMissingBooleanExpressionError(boolOp);
       }
 
-      next = new TokenNode(*_nIt++);
+      next = getNextToken();
       if (next->type != TokenType::R_PAREN) {
         throwMissingClosingParenthesisError(next);
       }
@@ -352,26 +398,25 @@ bool CSTree::isBooleanExpression() {
 
 bool CSTree::isNumericalExpression() {
   TokenNode *holderNode = _current;
-  auto holderIt = _nIt;
 
   // make flag relevant to deepest call unless set at top level
   _operandFlag = false;
 
-  TokenNode *first = new TokenNode(*_nIt++);
+  TokenNode *first = getNextToken();
   if (isOperand(first)) {
     // add operand to tree
 
     addSiblingAndAdvance(first);
 
     // get and check next
-    TokenNode *next = new TokenNode(*_nIt++);
+    TokenNode *next = getNextToken();
 
     if (isNumericOperator(next->type)) {
       // add operator to tree
 
       addSiblingAndAdvance(next);
 
-      next = new TokenNode(*_nIt++);
+      next = getNextToken();
 
       if (next->type == TokenType::L_PAREN) {
         // operand + operator + L-Paren + numExp + R-Paren
@@ -384,7 +429,7 @@ bool CSTree::isNumericalExpression() {
           throwMissingNumericalExpressionError(next);
         }
 
-        next = new TokenNode(*_nIt++);
+        next = getNextToken();
         if (next->type != TokenType::R_PAREN) {
           throwMissingClosingParenthesisError(next);
         }
@@ -401,7 +446,7 @@ bool CSTree::isNumericalExpression() {
 
         // operand + relationalOp + operand
         if (isRelationalOperator(nextType)) {
-          addSiblingAndAdvance(new TokenNode(*_nIt++));
+          addSiblingAndAdvance(getNextToken());
           _operandFlag = true;
           return false;
         }
@@ -421,7 +466,7 @@ bool CSTree::isNumericalExpression() {
       case TokenType::PLUS: {
         // i++
         addSiblingAndAdvance(next);
-        TokenNode *plus = new TokenNode(*_nIt++);
+        TokenNode *plus = getNextToken();
         if (plus->type != TokenType::PLUS) {
           throwMissingPlusOperatorError(plus);
         }
@@ -432,7 +477,7 @@ bool CSTree::isNumericalExpression() {
       case TokenType::MINUS: {
         // i--
         addSiblingAndAdvance(next);
-        TokenNode *minus = new TokenNode(*_nIt++);
+        TokenNode *minus = getNextToken();
         if (minus->type != TokenType::MINUS) {
           throwMissingMinusOperatorError(minus);
         }
@@ -473,7 +518,7 @@ bool CSTree::isNumericalExpression() {
         throwMissingNumericalExpressionError(first);
       }
 
-      TokenNode *next = new TokenNode(*_nIt++);
+      TokenNode *next = getNextToken();
       if (next->type != TokenType::R_PAREN) {
         throwMissingClosingParenthesisError(next);
       }
@@ -484,14 +529,14 @@ bool CSTree::isNumericalExpression() {
     case TokenType::PLUS: {
       // ++i
       addSiblingAndAdvance(first);
-      TokenNode *plus = new TokenNode(*_nIt++);
+      TokenNode *plus = getNextToken();
       if (plus->type != TokenType::PLUS) {
         throwMissingPlusOperatorError(plus);
       }
 
       addSiblingAndAdvance(plus);
 
-      TokenNode *identifier = new TokenNode(*_nIt++);
+      TokenNode *identifier = getNextToken();
       if (!isIdentifier(identifier->type)) {
         throwMissingIdentifierError(identifier);
       }
@@ -502,13 +547,13 @@ bool CSTree::isNumericalExpression() {
     case TokenType::MINUS: {
       // --i
       addSiblingAndAdvance(first);
-      TokenNode *minus = new TokenNode(*_nIt++);
+      TokenNode *minus = getNextToken();
       if (minus->type != TokenType::MINUS) {
         throwMissingMinusOperatorError(minus);
       }
       addSiblingAndAdvance(minus);
 
-      TokenNode *identifier = new TokenNode(*_nIt++);
+      TokenNode *identifier = getNextToken();
       if (!isIdentifier(identifier->type)) {
         throwMissingIdentifierError(identifier);
       }
@@ -516,14 +561,11 @@ bool CSTree::isNumericalExpression() {
       return true;
     }
     default:
+      delete first;
       revertState(holderNode);
       return false;
-      // throwSyntaxError(first, "not numExp");
     }
   }
-  // for testing
-  throw std::runtime_error("not numExp");
-  return true;
 }
 
 void CSTree::revertState(TokenNode *node) {
@@ -561,7 +603,7 @@ bool CSTree::isOperand(TokenNode *token) {
 }
 
 void CSTree::isFunction() {
-  TokenNode *next = new TokenNode(*_nIt++);
+  TokenNode *next = getNextToken();
 
   // function's datatype
 
@@ -571,7 +613,7 @@ void CSTree::isFunction() {
 
   addSiblingAndAdvance(next);
 
-  next = new TokenNode(*_nIt++);
+  next = getNextToken();
 
   // identifer for function name
 
@@ -583,7 +625,7 @@ void CSTree::isFunction() {
 
   addSiblingAndAdvance(next);
 
-  next = new TokenNode(*_nIt++);
+  next = getNextToken();
 
   // parenthesis
 
@@ -599,7 +641,7 @@ void CSTree::isFunction() {
     throwMissingParameterListError(next);
   }
 
-  next = new TokenNode(*_nIt);
+  next = getNextToken();
   if (next->type != TokenType::R_PAREN) {
     throwMissingClosingParenthesisError(next);
   }
@@ -612,7 +654,7 @@ void CSTree::isFunction() {
 
 bool CSTree::isParameterList() {
   // datatype identifier
-  TokenNode *next = new TokenNode(*_nIt++);
+  TokenNode *next = getNextToken();
   if (!isIdentifier(next->type)) {
     throwMissingDatatypeError(next);
   }
@@ -620,7 +662,7 @@ bool CSTree::isParameterList() {
   addSiblingAndAdvance(next);
 
   // variable name
-  next = new TokenNode(*_nIt++);
+  next = getNextToken();
   if (!isIdentifier(next->type)) {
     throwMissingIdentifierError(next);
   } else if (isKeyword(next->type)) {
@@ -628,14 +670,14 @@ bool CSTree::isParameterList() {
   }
   addSiblingAndAdvance(next);
 
-  next = new TokenNode(*_nIt++);
+  next = getNextToken();
 
   // array
   if (next->type == TokenType::L_BRACKET) {
     addSiblingAndAdvance(next);
 
     // array index
-    next = new TokenNode(*_nIt++);
+    next = getNextToken();
 
     // doesnt currently account for variables be used to access arrays
     if (next->type != TokenType::INTEGER || std::stoi(next->lexeme) < 0) {
@@ -644,7 +686,7 @@ bool CSTree::isParameterList() {
     addSiblingAndAdvance(next);
 
     // right bracket
-    next = new TokenNode(*_nIt++);
+    next = getNextToken();
     if (next->type != TokenType::R_BRACKET) {
       // doesnt currently account for numExp or anything other than whole,
       // positive int
@@ -653,7 +695,7 @@ bool CSTree::isParameterList() {
     addSiblingAndAdvance(next);
 
     // get next token to allow comma check
-    next = new TokenNode(*_nIt++);
+    next = getNextToken();
   }
   if (next->type == TokenType::COMMA) {
     addSiblingAndAdvance(next);
@@ -671,7 +713,7 @@ bool CSTree::isParameterList() {
 
 void CSTree::isProcedure() {
   // identifer
-  TokenNode *next = new TokenNode(*_nIt++);
+  TokenNode *next = getNextToken();
 
   // main procedure, treat uniquely
   if (next->type == TokenType::MAIN) {
@@ -689,7 +731,7 @@ void CSTree::isProcedure() {
 
   addSiblingAndAdvance(next);
 
-  next = new TokenNode(*_nIt++);
+  next = getNextToken();
 
   // L-Paren
   if (next->type != TokenType::L_PAREN) {
@@ -697,13 +739,14 @@ void CSTree::isProcedure() {
   }
   _openStack.push(TokenType::L_PAREN);
   addSiblingAndAdvance(next);
-  next = new TokenNode(*_nIt++);
+  next = getNextToken();
 
   // handle inside of (), can be void or paramList
   if (next->type == TokenType::VOID) {
     addSiblingAndAdvance(next);
   } else {
     _nIt--; // delete next? lost mem
+    delete next;
     _paramCheck = true;
     if (!isParameterList()) {
       throwSyntaxError(next, "Missing parameter list or void keyword");
@@ -711,7 +754,7 @@ void CSTree::isProcedure() {
     _paramCheck = false;
   }
 
-  next = new TokenNode(*_nIt);
+  next = getNextToken();
 
   // R-Paren
   if (next->type != TokenType::R_PAREN) {
@@ -724,9 +767,11 @@ void CSTree::isProcedure() {
   addSiblingAndAdvance(next);
 }
 
+TokenNode *CSTree::getNextToken() { return new TokenNode(*_nIt++); }
+
 void CSTree::isMain() {
   // L-Paren
-  TokenNode *next = new TokenNode(*_nIt++);
+  TokenNode *next = getNextToken();
 
   if (next->type != TokenType::L_PAREN) {
     throwMissingOpeningParenthesisError(next);
@@ -734,7 +779,7 @@ void CSTree::isMain() {
   _openStack.push(TokenType::L_PAREN);
   addSiblingAndAdvance(next);
 
-  next = new TokenNode(*_nIt++);
+  next = getNextToken();
 
   // handle inside of (), must be void
   if (next->type != TokenType::VOID) {
@@ -743,7 +788,7 @@ void CSTree::isMain() {
   addSiblingAndAdvance(next);
 
   // R-Paren
-  next = new TokenNode(*_nIt);
+  next = getNextToken();
   if (next->type != TokenType::R_PAREN) {
     throwMissingClosingParenthesisError(next);
   }
@@ -759,25 +804,25 @@ void CSTree::isDatatypeSpecifier() {
   // declaration statement
   // dec statement & initializaton statement
 
-  TokenNode *next = new TokenNode(*_nIt++);
-  _nIt--; // need node, but intialization list needs one back?
+  // TokenNode *next = getNextToken();
+  // // _nIt--; // need node, but intialization list needs one back?
 
   if (!isIdentifierList()) {
-    throwMissingIdentifierListError(next);
+    throwMissingIdentifierListError(getNextToken());
   }
 
-  next = new TokenNode(*_nIt++);
+  TokenNode *next = getNextToken();
   if (next->type != TokenType::SEMICOLON) {
     throwMissingSemicolonError(next);
   }
   // end, add sib, decrement iterator, return
 
   addSiblingAndAdvance(next);
-  _nIt--;
+  // _nIt--;
 }
 
 bool CSTree::isIdentifierList() {
-  TokenNode *next = new TokenNode(*_nIt++);
+  TokenNode *next = getNextToken();
 
   // variable name
   if (!isIdentifier(next->type)) {
@@ -787,7 +832,7 @@ bool CSTree::isIdentifierList() {
   }
   addSiblingAndAdvance(next);
 
-  next = new TokenNode(*_nIt++);
+  next = getNextToken();
 
   // array
   if (next->type == TokenType::L_BRACKET) {
@@ -795,7 +840,7 @@ bool CSTree::isIdentifierList() {
     addSiblingAndAdvance(next);
 
     // array index
-    next = new TokenNode(*_nIt++);
+    next = getNextToken();
 
     // doesnt currently account for variables be used to access arrays
     if (next->type != TokenType::INTEGER || std::stoi(next->lexeme) < 0) {
@@ -804,7 +849,7 @@ bool CSTree::isIdentifierList() {
     addSiblingAndAdvance(next);
 
     // right bracket
-    next = new TokenNode(*_nIt++);
+    next = getNextToken();
     if (next->type != TokenType::R_BRACKET) {
       // doesnt currently account for numExp or anything other than whole,
       // positive int
@@ -813,7 +858,7 @@ bool CSTree::isIdentifierList() {
     addSiblingAndAdvance(next);
 
     // get next token to allow comma check
-    next = new TokenNode(*_nIt++);
+    next = getNextToken();
   }
   if (next->type == TokenType::COMMA) {
     addSiblingAndAdvance(next);

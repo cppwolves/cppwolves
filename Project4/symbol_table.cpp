@@ -14,7 +14,7 @@ struct Scope {
   bool used;
 };
 
-SymbolTable::SymbolTable(CSTree *cst)
+SymbolTable::SymbolTable(CSTree &cst)
     : _tableHead(nullptr), _currentSymbol(nullptr) {
   parseCST(cst);
 }
@@ -86,8 +86,8 @@ bool SymbolTable::contains(const std::string &identifierName, int scope,
   return false;
 }
 
-void SymbolTable::parseCST(CSTree *cst) {
-  TokenNode *currToken = cst->head();
+void SymbolTable::parseCST(CSTree &cst) {
+  TokenNode *currToken = cst.head();
   std::stack<Scope> scopeStack;
   scopeStack.emplace(0, true);
   size_t nextScope = 1;
@@ -156,7 +156,7 @@ void SymbolTable::parseCST(CSTree *cst) {
 
   // Only the global scope should be left on the stack
   assert(scopeStack.size() == 1 && scopeStack.top().value == 0 &&
-         "Scope stack is not correctly algined");
+         "Scope stack is not correctly aligned");
 }
 
 SymbolNode *SymbolTable::parseFunction(TokenNode **rootToken,

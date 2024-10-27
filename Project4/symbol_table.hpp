@@ -11,7 +11,7 @@ public:
   typedef SymbolTableListNode SymbolNode;
 
 public:
-  SymbolTable(CSTree *cst);
+  SymbolTable(CSTree &cst);
   virtual ~SymbolTable() override;
 
   virtual SymbolNode *head() override { return _tableHead; };
@@ -24,7 +24,7 @@ public:
                 TokenType type = TokenType::DEFAULT) const;
 
 private:
-  void parseCST(CSTree *cst);
+  void parseCST(CSTree &cst);
   void addNext(SymbolNode *symbol);
   void addParameter(SymbolNode *symbol);
 

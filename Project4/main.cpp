@@ -53,7 +53,7 @@ void writeTokens(std::vector<Token> &tokens, const std::string &filename) {
   outputFile.close();
 }
 
-void writeCST(CSTree *cst, const std::string &filename) {
+void writeCST(CSTree &cst, const std::string &filename) {
   std::ofstream outputFile(filename);
   if (!outputFile.is_open()) {
     throw std::runtime_error("Error: Could not open output file '" + filename +
@@ -61,7 +61,7 @@ void writeCST(CSTree *cst, const std::string &filename) {
   }
 
   int rowLength = 0;
-  TokenNode *node = cst->head();
+  TokenNode *node = cst.head();
 
   while (node) {
     // Output the token lexeme
@@ -108,7 +108,7 @@ void writeCST(CSTree *cst, const std::string &filename) {
   outputFile.close();
 }
 
-void writeSymbolTable(SymbolTable *st, const std::string &filename) {
+void writeSymbolTable(SymbolTable &st, const std::string &filename) {
   std::ofstream outputFile(filename);
   if (!outputFile.is_open()) {
     throw std::runtime_error("Error: Could not open output file '" + filename +
@@ -118,7 +118,7 @@ void writeSymbolTable(SymbolTable *st, const std::string &filename) {
   const int labelWidth = 20;  // Width for the label column
   const int valueIndent = 20; // Indentation for the value column
 
-  SymbolTableListNode *symbol = st->head();
+  SymbolTableListNode *symbol = st.head();
   while (symbol) {
     outputFile << std::right << std::setw(labelWidth) << "IDENTIFIER_NAME:";
     outputFile << std::setw(valueIndent - labelWidth) << " "
@@ -153,7 +153,7 @@ void writeSymbolTable(SymbolTable *st, const std::string &filename) {
     symbol = symbol->next();
   }
 
-  symbol = st->head();
+  symbol = st.head();
   while (symbol) {
     SymbolTableListNode *param = symbol->parameterList;
     if (param) {
@@ -211,20 +211,11 @@ int main(int argc, char *argv[]) {
     } else {
       writeTokens(tokens, "tokens_output.txt");
 
-      CSTree *tree = new CSTree(tokens);
+      CSTree tree(tokens);
+      writeCST(tree, "cst_output.txt");
 
-      if (!tree) {
-        std::cout << "CST is empty\n";
-      } else {
-        writeCST(tree, "cst_output.txt");
-
-        SymbolTable *symbolTable = new SymbolTable(tree);
-        if (!symbolTable) {
-          std::cout << "SymbolTable is empty\n";
-        } else {
-          writeSymbolTable(symbolTable, "symbol_table_output.txt");
-        }
-      }
+      SymbolTable symbolTable(tree);
+      writeSymbolTable(symbolTable, "symbol_table_output.txt");
     }
   } catch (const std::exception &ex) {
     std::cerr << ex.what() << "\n";

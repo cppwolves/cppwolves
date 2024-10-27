@@ -8,6 +8,7 @@ public:
   TokenNode(const Token &token, TokenNode *sibling = nullptr,
             TokenNode *child = nullptr)
       : Token(token), sibling(sibling), child(child) {}
+  ~TokenNode() = default;
 
   TokenNode *sibling;
   TokenNode *child;
