@@ -53,8 +53,6 @@ private:
 
 private:
   bool _operandFlag{};
-  bool _chainCheck{};
-  bool _paramCheck{};
   std::stack<TokenType> _openStack{};
 };
 

@@ -12,5 +12,6 @@
 /**/tokens_output.txt
 /**/cst_output.txt
 /**/program_output.txt
+/**/symbol_table_output.txt
 
 /**/vgcore.*

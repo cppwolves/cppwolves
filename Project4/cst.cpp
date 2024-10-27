@@ -700,9 +700,7 @@ bool CSTree::isParameterList() {
   if (next->type == TokenType::COMMA) {
     addSiblingAndAdvance(next);
 
-    _chainCheck = true;
     isParameterList();
-    _chainCheck = false;
   } else {
     // ptr? reference? can we just ignore it all for now
     _nIt--; // unget
@@ -747,11 +745,9 @@ void CSTree::isProcedure() {
   } else {
     _nIt--; // delete next? lost mem
     delete next;
-    _paramCheck = true;
     if (!isParameterList()) {
       throwSyntaxError(next, "Missing parameter list or void keyword");
     }
-    _paramCheck = false;
   }
 
   next = getNextToken();
@@ -836,7 +832,6 @@ bool CSTree::isIdentifierList() {
 
   // array
   if (next->type == TokenType::L_BRACKET) {
-    _chainCheck = false; // is list, must be well-formed
     addSiblingAndAdvance(next);
 
     // array index
@@ -862,10 +857,7 @@ bool CSTree::isIdentifierList() {
   }
   if (next->type == TokenType::COMMA) {
     addSiblingAndAdvance(next);
-
-    _chainCheck = true;
     isIdentifierList();
-    _chainCheck = false;
   } else {
     // ptr? reference? can we just ignore it all for now
     _nIt--; // unget
