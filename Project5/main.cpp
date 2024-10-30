@@ -11,6 +11,7 @@
 #include "token_enum.hpp"
 #include "token_node.hpp"
 #include "tokenizer.hpp"
+#include "postfix_conv.cpp"
 
 std::string toLower(const std::string &s) {
   std::string res{};
@@ -216,6 +217,9 @@ int main(int argc, char *argv[]) {
 
       SymbolTable symbolTable(tree);
       writeSymbolTable(symbolTable, "symbol_table_output.txt");
+
+      // NumExpPostfixConverter(tree.head(), tree.tail());
+
     }
   } catch (const std::exception &ex) {
     std::cerr << ex.what() << "\n";

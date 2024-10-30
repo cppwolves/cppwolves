@@ -1,132 +1,164 @@
-/* Numerical Expression Shunting Yard
-foreach token in token list
-{
-  if ((token == INTEGER) || (token == IDENTIFIER) || (token == SINGLE QUOTE) || (token == DOUBLE QUOTE) || (token == STRING))
-  {
-    display token
-  }
-  else
-  {
-    if (token == LEFT PARENTHESIS)
-    {
-      push token on stack
-    }
-    else
-    {
-      if (token == RIGHT PARENTHESIS)
-      {
-        while (top of stack token != LEFT PARENTHESIS)
-        {
-          display token at top of stack
-          pop stack
-        }
-        pop stack
-      }
-      else
-      {
-        if ((token == PLUS) || (token == MINUS) || (token == ASTERISK) || (token == DIVIDE) || (token == MODULO) || (token == ASSIGNMENT))
-        {
-          if (stack is empty)
-          {
-            push token on stack
-          }
-          else
-          {
-            if ((token == PLUS) || (token == MINUS))
-            {
-              finished = FALSE;
-              while (not finished)
-              {
-                if (stack is not empty)
-                {
-                  if ((top of stack token == PLUS) or (top of stack token == MINUS) or (top of stack token == ASTERISK) or (top of stack token == DIVIDE) or (top of stack token == MODULO))
-                  {
-                    display token at top of stack
-                    pop stack
-                  }
-                  else
-                  {
-                    push token on stack
-                    finished = TRUE;
-                  }
-                }
-                else
-                {
-                  push token on stack
-                  finished = TRUE;
-                }
-              }
-            }
-            else
-            {
-              if ((token == TOKEN_ASTERISK) || (token == DIVIDE) || (token == TOKEN_MODULO))
-              {
-                finished = FALSE;
-                while (not finished)
-                {
-                  if (stack is not empty)
-                  {
-                    if ((top of stack token == ASTERISK) || (top of stack token == DIVIDE) || (top of stack token == TOKEN_MODULO))
-                    {
-                      display token at top of stack
-                      pop stack
-                    }
-                    else
-                    {
-                      push token on stack
-                      finished = TRUE;
-                    }
-                  }
-                  else
-                  {
-                    push token on stack
-                    finished = TRUE;
-                  }
-                }
-              }
-              else
-              {
-                if (token == ASSIGNMENT OPERATOR)
-                {
-                  finished = FALSE;
-                  while (not finished)
-                  {
-                    if (stack is not empty)
-                    {
-                      if ((token == PLUS) || (token == MINUS) || (token == ASTERISK) || (token == DIVIDE) || (token == MODULO))
-                      {
-                        display token at top of stack
-                        pop stack
-                      }
-                      else
-                      {
-                        push token on stack
-                        finished = TRUE;
-                      }
-                    }
-                    else
-                    {
-                      push token on stack
-                      finished = TRUE;
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-while (stack is not empty)
-{
-  display token at top of stack
-  pop stack
-}
-*/
+#include <iostream>
+#include <stack>
 
-void NumExpPostfixConverter() {
+#include "token_enum.hpp"
+#include "token_node.hpp"
+
+/* Numerical Expression Shunting Yard */
+
+void displayToken(TokenNode* currToken) {
+    std::cout << currToken->lexeme << " ";
+}
+
+void NumExpPostfixConverter(TokenNode* currToken, TokenNode* endToken) {
+    std::stack<TokenNode*> _holdStack;
+    bool _finished = false;  // looping flag
+    TokenNode* topToken = nullptr;
+
+    // 'display' token meaning add to ASTree
+    // function could return a pointer to a chain of AST nodes, handled upon return to caller
+    // currently: printing to std::cout
+
+    // movement loop
+    // endNode must be a sibling, and have be set before function call
+    for (; currToken != endToken; currToken = currToken->sibling) {
+        switch (currToken->type) {
+            case TokenType::INTEGER:
+            case TokenType::IDENTIFIER:
+            case TokenType::SINGLE_QUOTE:
+            case TokenType::DOUBLE_QUOTE:
+            case TokenType::STRING: {
+                displayToken(currToken);
+                break;
+            }
+            case TokenType::L_PAREN: {
+                _holdStack.push(currToken);
+                break;
+            }
+            case TokenType::R_PAREN: {
+                topToken = _holdStack.top();
+                while (topToken->type != TokenType::L_PAREN) {
+                    displayToken(topToken);
+                    _holdStack.pop();
+                    if (!_holdStack.empty()) {
+                        topToken = _holdStack.top();
+                    }
+                }
+                _holdStack.pop();
+                break;
+            }
+            case TokenType::PLUS:
+            case TokenType::MINUS:
+            case TokenType::ASTERISK:
+            case TokenType::DIVIDE:
+            case TokenType::MODULO:
+            case TokenType::ASSIGNMENT_OPERATOR: {
+                if (_holdStack.empty()) {
+                    _holdStack.push(currToken);
+                } else {
+                    switch (currToken->type) {
+                        case TokenType::PLUS:
+                        case TokenType::MINUS: {
+                            _finished = false;
+                            while (!_finished) {
+                                if (!_holdStack.empty()) {
+                                    topToken = _holdStack.top();
+                                    if ((topToken->type == TokenType::PLUS) ||
+                                        (topToken->type == TokenType::MINUS) ||
+                                        (topToken->type == TokenType::ASTERISK) ||
+                                        (topToken->type == TokenType::DIVIDE) ||
+                                        (topToken->type == TokenType::MODULO)) {
+                                        // display token at top of stack
+                                        displayToken(topToken);
+                                        _holdStack.pop();
+                                    } else {
+                                        // push token on stack
+                                        _holdStack.push(currToken);
+                                        _finished = true;
+                                    }
+                                } else {
+                                    // push token on stack
+                                    _holdStack.push(currToken);
+                                    _finished = true;
+                                }
+                            }
+                            break;
+                        }
+                        case TokenType::ASTERISK:
+                        case TokenType::DIVIDE:
+                        case TokenType::MODULO: {
+                            _finished = false;
+                            while (!_finished) {
+                                if (!_holdStack.empty()) {
+                                    topToken = _holdStack.top();
+                                    if ((topToken->type == TokenType::ASTERISK) ||
+                                        (topToken->type == TokenType::DIVIDE) ||
+                                        (topToken->type == TokenType::MODULO)) {
+                                        // display token at top of stack
+                                        // pop stack
+
+                                        displayToken(topToken);
+                                        _holdStack.pop();
+                                    } else {
+                                        // push token on stack
+                                        _holdStack.push(currToken);
+                                        _finished = true;
+                                    }
+                                } else {
+                                    // push token on stack
+                                    _holdStack.push(currToken);
+                                    _finished = true;
+                                }
+                            }
+                            break;
+                        }
+                        case TokenType::ASSIGNMENT_OPERATOR: {
+                            _finished = false;
+                            while (!_finished) {
+                                if (!_holdStack.empty()) {
+                                    topToken = _holdStack.top();
+                                    if ((currToken->type == TokenType::PLUS) ||
+                                        (currToken->type == TokenType::MINUS) ||
+                                        (currToken->type == TokenType::ASTERISK) ||
+                                        (currToken->type == TokenType::DIVIDE) ||
+                                        (currToken->type == TokenType::MODULO)) {
+                                        // display token at top of stack
+                                        // pop stack
+                                        displayToken(topToken);
+                                        _holdStack.pop();
+                                        topToken = _holdStack.top();
+
+                                    } else {
+                                        // push token on stack
+                                        _holdStack.push(currToken);
+                                        _finished = true;
+                                    }
+                                } else {
+                                    // push token on stack
+                                    _holdStack.push(currToken);
+                                    _finished = true;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+                break;
+            }
+            default: {
+                // error out?
+                // should never reach this point, all cst rows should be correct
+            }
+        }
+    }
+    while (!_holdStack.empty()) {
+        // display token at top of stack
+        // pop stack
+        topToken = _holdStack.top();
+        displayToken(topToken);
+        _holdStack.pop();
+    }
+    std::cout << std::endl;
 }
 
 /* Boolean Exp Shunting Yard
@@ -383,4 +415,149 @@ while (stack is not empty)
 */
 
 void BoolExpPostfixConverter() {
+}
+
+// non switch case version (his)
+void ogExp(TokenNode* currToken, TokenNode* endToken) {
+    std::stack<TokenNode*> _holdStack;
+    bool _finished = false;  // looping flag
+    TokenNode* topToken = nullptr;
+
+    // 'display' token meaning add to ASTree
+    // function could return a pointer to a chain of AST nodes, handled upon return to caller
+    // currently: printing to std::cout
+
+    // movement loop
+    // endNode must be a sibling, and have be set before function call
+    for (; currToken != endToken; currToken = currToken->sibling) {
+        if ((currToken->type == TokenType::INTEGER) ||
+            (currToken->type == TokenType::IDENTIFIER) ||
+            (currToken->type == TokenType::SINGLE_QUOTE) ||
+            (currToken->type == TokenType::DOUBLE_QUOTE) ||
+            (currToken->type == TokenType::STRING)) {
+            // display token
+            displayToken(currToken);
+        } else {
+            if (currToken->type == TokenType::L_PAREN) {
+                _holdStack.push(currToken);
+
+            } else {
+                if (currToken->type == TokenType::R_PAREN) {
+                    topToken = _holdStack.top();
+                    while (topToken->type != TokenType::L_PAREN) {
+                        // display token at top of stack
+                        // pop stack
+                        displayToken(topToken);
+                        _holdStack.pop();
+                        if (!_holdStack.empty()) {
+                            topToken = _holdStack.top();
+                        }
+                    }
+                    _holdStack.pop();
+                } else {
+                    if ((currToken->type == TokenType::PLUS) ||
+                        (currToken->type == TokenType::MINUS) ||
+                        (currToken->type == TokenType::ASTERISK) ||
+                        (currToken->type == TokenType::DIVIDE) ||
+                        (currToken->type == TokenType::MODULO) ||
+                        (currToken->type == TokenType::ASSIGNMENT_OPERATOR)) {
+                        if (_holdStack.empty()) {
+                            _holdStack.push(currToken);
+                        } else {
+                            if ((currToken->type == TokenType::PLUS) || (currToken->type == TokenType::MINUS)) {
+                                _finished = false;
+                                while (!_finished) {
+                                    if (!_holdStack.empty()) {
+                                        topToken = _holdStack.top();
+                                        if ((topToken->type == TokenType::PLUS) ||
+                                            (topToken->type == TokenType::MINUS) ||
+                                            (topToken->type == TokenType::ASTERISK) ||
+                                            (topToken->type == TokenType::DIVIDE) ||
+                                            (topToken->type == TokenType::MODULO)) {
+                                            // display token at top of stack
+                                            displayToken(topToken);
+                                            _holdStack.pop();
+                                        } else {
+                                            // push token on stack
+                                            _holdStack.push(currToken);
+                                            _finished = true;
+                                        }
+                                    } else {
+                                        // push token on stack
+                                        _holdStack.push(currToken);
+                                        _finished = true;
+                                    }
+                                }
+                            } else {
+                                if ((currToken->type == TokenType::ASTERISK) ||
+                                    (currToken->type == TokenType::DIVIDE) ||
+                                    (currToken->type == TokenType::MODULO)) {
+                                    _finished = false;
+                                    while (!_finished) {
+                                        if (!_holdStack.empty()) {
+                                            topToken = _holdStack.top();
+                                            if ((topToken->type == TokenType::ASTERISK) ||
+                                                (topToken->type == TokenType::DIVIDE) ||
+                                                (topToken->type == TokenType::MODULO)) {
+                                                // display token at top of stack
+                                                // pop stack
+
+                                                displayToken(topToken);
+                                                _holdStack.pop();
+                                            } else {
+                                                // push token on stack
+                                                _holdStack.push(currToken);
+                                                _finished = true;
+                                            }
+                                        } else {
+                                            // push token on stack
+                                            _holdStack.push(currToken);
+                                            _finished = true;
+                                        }
+                                    }
+                                } else {
+                                    if (currToken->type == TokenType::ASSIGNMENT_OPERATOR) {
+                                        _finished = false;
+                                        while (!_finished) {
+                                            if (!_holdStack.empty()) {
+                                                topToken = _holdStack.top();
+                                                if ((currToken->type == TokenType::PLUS) ||
+                                                    (currToken->type == TokenType::MINUS) ||
+                                                    (currToken->type == TokenType::ASTERISK) ||
+                                                    (currToken->type == TokenType::DIVIDE) ||
+                                                    (currToken->type == TokenType::MODULO)) {
+                                                    // display token at top of stack
+                                                    // pop stack
+                                                    displayToken(topToken);
+                                                    _holdStack.pop();
+                                                    topToken = _holdStack.top();
+
+                                                } else {
+                                                    // push token on stack
+                                                    _holdStack.push(currToken);
+                                                    _finished = true;
+                                                }
+                                            } else {
+                                                // push token on stack
+                                                _holdStack.push(currToken);
+                                                _finished = true;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    while (!_holdStack.empty()) {
+        // display token at top of stack
+        // pop stack
+        topToken = _holdStack.top();
+        displayToken(topToken);
+        _holdStack.pop();
+    }
 }
