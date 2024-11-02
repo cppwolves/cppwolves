@@ -219,6 +219,7 @@ int main(int argc, char *argv[]) {
       writeSymbolTable(symbolTable, "symbol_table_output.txt");
 
       // NumExpPostfixConverter(tree.head(), tree.tail());
+      // BoolExpPostfixConverter(tree.head(), tree.tail());
 
     }
   } catch (const std::exception &ex) {
