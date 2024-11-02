@@ -117,11 +117,11 @@ void NumExpPostfixConverter(TokenNode* currToken, TokenNode* endToken) {
                             while (!_finished) {
                                 if (!_holdStack.empty()) {
                                     topToken = _holdStack.top();
-                                    if ((currToken->type == TokenType::PLUS) ||
-                                        (currToken->type == TokenType::MINUS) ||
-                                        (currToken->type == TokenType::ASTERISK) ||
-                                        (currToken->type == TokenType::DIVIDE) ||
-                                        (currToken->type == TokenType::MODULO)) {
+                                    if ((topToken->type == TokenType::PLUS) ||
+                                        (topToken->type == TokenType::MINUS) ||
+                                        (topToken->type == TokenType::ASTERISK) ||
+                                        (topToken->type == TokenType::DIVIDE) ||
+                                        (topToken->type == TokenType::MODULO)) {
                                         // display token at top of stack
                                         // pop stack
                                         displayToken(topToken);
