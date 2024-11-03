@@ -20,6 +20,9 @@ enum class ASTNodeType {
     FOR3,
     BEGIN_BLOCK,
     END_BLOCK,
+    SIBLING,
+    AMBIGUOUS,
+    UNKNOWN,
 };
 
 static const char* typeToAString(ASTNodeType type) {
@@ -48,22 +51,73 @@ static const char* typeToAString(ASTNodeType type) {
             return "BEGIN_BLOCK";
         case ASTNodeType::END_BLOCK:
             return "END_BLOCK";
+        case ASTNodeType::SIBLING:
+            return "SIBLING";
+        case ASTNodeType::AMBIGUOUS:
+            return "AMBIGUOUS";
         default:
             return "UNKNOWN";
     }
 }
 
+// FOR and INDENTIFER are ambiguous, dependent on FOR(1,2,3) and ASSIGNMENT vs call
+static const ASTNodeType tokenTypeToASType(TokenType type) {
+    switch (type) {
+        // declaration
+        case TokenType::FUNCTION:
+        case TokenType::PROCEDURE:
+        case TokenType::INT:
+        case TokenType::CHAR:
+        case TokenType::BOOL:
+            return ASTNodeType::DECLARATION;
+
+        // boolean exp
+        case TokenType::IF:
+            return ASTNodeType::IF;
+        case TokenType::WHILE:
+            return ASTNodeType::WHILE;
+        case TokenType::ELSE:
+            return ASTNodeType::ELSE;
+
+        // other
+        case TokenType::RETURN:
+            return ASTNodeType::RETURN;
+        case TokenType::PRINTF:
+            return ASTNodeType::PRINTF;
+        case TokenType::FOR:
+        case TokenType::IDENTIFIER:
+            return ASTNodeType::AMBIGUOUS;
+
+        // blocks
+        case TokenType::L_BRACE:
+            return ASTNodeType::BEGIN_BLOCK;
+        case TokenType::R_BRACE:
+            return ASTNodeType::END_BLOCK;
+        default:
+            return ASTNodeType::UNKNOWN;
+    }
+}
+
+// class ASTSiblingNode;
+
 class ASTListNode {
    public:
     ASTListNode() = default;
-    ASTListNode(ASTNodeType type) : type(type), symbol(nullptr), lexeme(typeToAString(type)) {};
+    ASTListNode(ASTNodeType type) : type(type), symbol(nullptr), lexeme(typeToAString(type)), token(nullptr) {};
 
     SymbolTableListNode* symbol;
     ASTNodeType type;
     std::string lexeme;
+    TokenNode* token;
 
     ASTListNode* sibling;
     ASTListNode* child;
 };
+
+// class ASTSiblingNode : public ASTListNode {
+//    public:
+//     ASTSiblingNode(TokenNode* token) : ASTListNode(ASTNodeType::SIBLING), token(token) {};
+//     ASTSiblingNode* sibling;
+// };
 
 #endif

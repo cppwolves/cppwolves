@@ -219,43 +219,29 @@ void writeAST(ASTree &ast, const std::string &filename) {
         // Update the row length
         // rowLength += str.size();
 
-        // If there is a sibling, continue.
-        if (node->sibling) {
+        // setting holder child bc nodes are currently aligned vertically
+        auto _hnode = node;
+        while (node->sibling) {
+            std::string str = node->sibling->token->lexeme + " -> ";
+            outputFile << str;
             node = node->sibling;
-            continue;
         }
 
-        // Otherwise, print null and start a new row
-        // outputFile << "NULL\n";
-
-        // Subtract the current lexeme length to align the down pointer
-        // rowLength -= node->lexeme.size() + 2;
+        node = _hnode;
 
         if (node->type == ASTNodeType::DECLARATION) {
             std::string symLink = "[sym] " + node->symbol->identifierName;
             outputFile << symLink << "\n";
-            // rowLength += symLink.size() / 2;
 
         } else {
             // Otherwise, print null and start a new row
             outputFile << "NULL\n";
-            // Subtract the current lexeme length to align the down pointer
-            // rowLength -= node->lexeme.size() + 2;
         }
 
         // Output the down pointer, adding a new row for each component
         outputFile << std::setw(2) << std::right << "|\n";
         outputFile << std::setw(2) << std::right << "v\n"
                    << std::flush;
-
-        // Pad the next row with spaces to align the next token output
-        // for (int ws = 0; ws < rowLength - 2; ++ws) {
-        //     outputFile << " ";
-        // }
-
-        // Align the next output
-        // rowLength -= 2;
-        // std::cout << std::flush;
 
         // If there is no child, output NULL
         if (!node->child) {

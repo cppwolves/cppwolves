@@ -1,7 +1,5 @@
-function int sum_of_first_n_squares(int n) {
-    function int fun2(int n) {
-        int sum2;
+function int sumFun(int n) {
+    while ((i < 5) && (cat != dog)) {
+        int kid;
     }
-    char characterNAme;
-    int sum;
 }
