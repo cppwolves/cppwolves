@@ -40,10 +40,7 @@ ASTree::ASTree(CSTree* cTree, SymbolTable* symTable) : cTree(cTree), symTable(sy
                 break;
             }
             case TokenType::PRINTF: {
-                // handle printf
-                while (_currCNode->type != TokenType::SEMICOLON) {
-                    advance();
-                }
+                addNext(parsePrintf());
                 break;
             }
             case TokenType::RETURN: {
@@ -234,6 +231,43 @@ ASTListNode* ASTree::parseReturn() {
     node->sibling = sibList;
 
     // return RETURN
+    return node;
+}
+
+ASTListNode* ASTree::parsePrintf() {
+    ASTListNode* node = new ASTListNode(ASTNodeType::PRINTF);
+
+    // skip ("
+    _currCNode = _currCNode->sibling->sibling->sibling;
+
+    // get string
+    ASTListNode* str = new ASTListNode(ASTNodeType::SIBLING);
+    str->token = _currCNode;
+    node->sibling = str;
+
+    // skip "
+    _currCNode = _currCNode->sibling->sibling;
+
+    ASTListNode* lastSibling = str;
+
+    // need to actually parse parameters
+    // could be: identifiers, nums, chars, strings, functions, arrays, etc.
+    while (_currCNode->type != TokenType::R_PAREN) {
+        if (_currCNode->type == TokenType::COMMA) {
+            advance();
+            continue;
+        }
+        ASTListNode* param = new ASTListNode(ASTNodeType::SIBLING);
+        param->token = _currCNode;
+        lastSibling->sibling = param;
+        lastSibling = param;
+        advance();
+    }
+
+    // skip );
+    _currCNode = _currCNode->sibling->child;
+
+    // return PRINTF
     return node;
 }
 

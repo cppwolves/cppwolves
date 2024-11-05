@@ -42,6 +42,7 @@ class ASTree {
     ASTListNode *parseFor();
     ASTListNode *parseCall();
     ASTListNode *parseReturn();
+    ASTListNode *parsePrintf();
 };
 
 #endif  // ASTREE_HPP
