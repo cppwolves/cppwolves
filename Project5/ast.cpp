@@ -17,15 +17,15 @@ ASTree::ASTree(CSTree* cTree, SymbolTable* symTable) : cTree(cTree), symTable(sy
             case TokenType::CHAR:
             case TokenType::BOOL: {
                 // handle declaration
-                addNext(parseDeclaration());
+                do {
+                    addNext(parseDeclaration());
+                } while (_currCNode->type == TokenType::COMMA);
                 break;
             }
             case TokenType::IF:
             case TokenType::WHILE: {
-                addNext(parseBooleanExp());
-                // advance();
-
                 // handle postfix bool exp
+                addNext(parseBooleanExp());
                 break;
             }
             case TokenType::ELSE: {
@@ -34,25 +34,21 @@ ASTree::ASTree(CSTree* cTree, SymbolTable* symTable) : cTree(cTree), symTable(sy
                 break;
             }
             case TokenType::FOR: {
+                // handle FOR (break into 3)
                 addNext(parseFor());
                 advance();
-
-                // handle FOR (break into 3)
                 break;
             }
             case TokenType::PRINTF: {
+                // handle printf
                 while (_currCNode->type != TokenType::SEMICOLON) {
                     advance();
                 }
-                // handle printf
                 break;
             }
             case TokenType::RETURN: {
-                while (_currCNode->type != TokenType::SEMICOLON) {
-                    advance();
-                }
-
-                // handle return ?
+                // handle return
+                addNext(parseReturn());
                 break;
             }
             case TokenType::IDENTIFIER: {
@@ -63,10 +59,6 @@ ASTree::ASTree(CSTree* cTree, SymbolTable* symTable) : cTree(cTree), symTable(sy
                     addNext(parseAssignment());
                     advance();
                 }
-
-                // advance();
-
-                // handle identifier (+list) for postfix exp
                 break;
             }
             case TokenType::L_BRACE: {
@@ -116,6 +108,7 @@ void ASTree::advance() {
 
 ASTListNode* ASTree::parseDeclaration() {
     ASTListNode* node = new ASTListNode(ASTNodeType::DECLARATION);
+    bool _function = _currCNode->type == TokenType::FUNCTION;
 
     // reach identifer, should only be max twice (function + type + [name])
     while (_currCNode->type != TokenType::IDENTIFIER && _currCNode->type != TokenType::MAIN) {
@@ -123,10 +116,19 @@ ASTListNode* ASTree::parseDeclaration() {
     }
 
     node->symbol = symTable->find(_currCNode->lexeme);
-    while (!isDelimiter(_currCNode->type)) {
+
+    // find either end of current dec, or end of line
+    // or, if function, loop through parameter list
+
+    while (_function && !isDelimiter(_currCNode->type)) {
+        advance();
+    }
+    // std::cout << _currCNode->lexeme << std::end;
+    while (_currCNode->type != TokenType::COMMA && !isDelimiter(_currCNode->type)) {
         advance();
     }
 
+    // return DECLARATION
     return node;
 }
 
@@ -219,6 +221,18 @@ ASTListNode* ASTree::parseAssignment() {
     node->sibling = sibList;
 
     // return ASSIGNMENT
+    return node;
+}
+
+ASTListNode* ASTree::parseReturn() {
+    ASTListNode* node = new ASTListNode(ASTNodeType::RETURN);
+
+    // convert exp, doesnt work if assignment
+    ASTListNode* sibList = nullptr;
+    _currCNode = boolPostfixConverter(_currCNode, sibList);
+    node->sibling = sibList;
+
+    // return RETURN
     return node;
 }
 

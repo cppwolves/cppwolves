@@ -207,7 +207,7 @@ void writeAST(ASTree &ast, const std::string &filename) {
     }
 
     int rowLength = 0;
-    // std::cout << "here";
+    std::cout << "here";
     ASTListNode *node = ast.head();
 
     while (node) {
