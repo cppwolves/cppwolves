@@ -193,7 +193,7 @@ void CSTree::isFor() {
   addSiblingAndAdvance(semiColon2);
 
   // This may be empty
-  if (_nIt->type != TokenType::SEMICOLON && !isNumericalExpression()) {
+  if (_nIt->type != TokenType::R_PAREN && !isNumericalExpression()) {
     throwMissingNumericalExpressionError(semiColon2);
   }
 
