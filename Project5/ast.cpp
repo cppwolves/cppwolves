@@ -59,6 +59,7 @@ ASTree::ASTree(CSTree* cTree, SymbolTable* symTable) : cTree(cTree), symTable(sy
                     addNext(parseAssignment());
                     advance();
                 }
+                // advance();
                 break;
             }
             case TokenType::L_BRACE: {
@@ -291,6 +292,7 @@ TokenNode* ASTree::numPostfixConverter(TokenNode*& currToken, ASTListNode*& _tok
             case TokenType::FALSE:
             case TokenType::SINGLE_QUOTE:
             case TokenType::DOUBLE_QUOTE:
+            case TokenType::CHAR_LITERAL:
             case TokenType::STRING: {
                 displayToken(currToken, _tokenStr, _tail);
                 break;
@@ -436,6 +438,7 @@ TokenNode* ASTree::boolPostfixConverter(TokenNode*& currToken, ASTListNode*& _to
             case TokenType::SINGLE_QUOTE:
             case TokenType::DOUBLE_QUOTE:
             case TokenType::STRING:
+            case TokenType::CHAR_LITERAL:
             case TokenType::L_BRACKET:
             case TokenType::R_BRACKET: {
                 displayToken(currToken, _tokenStr, _tail);
@@ -473,7 +476,7 @@ TokenNode* ASTree::boolPostfixConverter(TokenNode*& currToken, ASTListNode*& _to
             case TokenType::ASTERISK:
             case TokenType::DIVIDE:
             case TokenType::MODULO: {
-                if (_holdStack.empty() || _holdStack.top()->type == TokenType::L_PAREN) {
+                if (_holdStack.empty()) {
                     _holdStack.push(currToken);
                 } else {
                     switch (currToken->type) {
