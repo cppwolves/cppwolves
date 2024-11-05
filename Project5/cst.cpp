@@ -168,8 +168,9 @@ void CSTree::isFor() {
 
   addSiblingAndAdvance(lParen);
 
-  if (!isInitializationExpression()) {
-    throwMissingInitializationExpressionError(lParen);
+  // This may be empty
+  if (_nIt->type != TokenType::SEMICOLON && !isInitializationExpression()) {
+      throwMissingInitializationExpressionError(lParen);
   }
 
   TokenNode *semiColon = getNextToken();
@@ -178,7 +179,9 @@ void CSTree::isFor() {
   }
 
   addSiblingAndAdvance(semiColon);
-  if (!isBooleanExpression()) {
+
+  // This may be empty
+  if (_nIt->type != TokenType::SEMICOLON && !isBooleanExpression()) {
     throwMissingBooleanExpressionError(semiColon);
   }
 
@@ -189,7 +192,8 @@ void CSTree::isFor() {
 
   addSiblingAndAdvance(semiColon2);
 
-  if (!isNumericalExpression()) {
+  // This may be empty
+  if (_nIt->type != TokenType::SEMICOLON && !isNumericalExpression()) {
     throwMissingNumericalExpressionError(semiColon2);
   }
 
@@ -258,12 +262,21 @@ bool CSTree::isInitializationExpression() {
     return true;
   }
 
+  if (_nIt->type == TokenType::SEMICOLON) {
+    addSiblingAndAdvance(unknown);
+    return true;
+  }
+
+  // revertState(unknown);
+  --_nIt;
+  delete unknown;
+
   // FOR TESTING, just to get single number
-  addSiblingAndAdvance(unknown);
+  // addSiblingAndAdvance(unknown);
 
   // else, must be an expression to be valid
-  // isExpression(); create
-  return true;
+  return isExpression(); // create
+  // return true;
 }
 
 bool CSTree::isBooleanExpression() {
@@ -294,6 +307,9 @@ bool CSTree::isBooleanExpression() {
   }
   if (isNumericalExpression() ||
       (!_operandFlag || (_operandFlag && isRelationalOperator(_nIt->type)))) {
+    if (_nIt->type == TokenType::SEMICOLON) {
+      return true;
+    }
     TokenNode *next = getNextToken();
 
     addSiblingAndAdvance(next);
@@ -598,8 +614,8 @@ bool CSTree::isOperand(TokenNode *token) {
          token->type == TokenType::INTEGER ||
          token->type == TokenType::FUNCTION ||
          token->type == TokenType::CHAR_LITERAL ||
-         (token->type == TokenType::STRING && token->lexeme.length() == 1) ||
-         isNumericOperator(token->type);
+         (token->type == TokenType::STRING && token->lexeme.length() == 1);
+  // isNumericOperator(token->type);
 }
 
 void CSTree::isFunction() {
