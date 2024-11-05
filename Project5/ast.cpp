@@ -34,6 +34,7 @@ ASTree::ASTree(CSTree* cTree, SymbolTable* symTable) : cTree(cTree), symTable(sy
                 break;
             }
             case TokenType::FOR: {
+                addNext(parseFor());
                 advance();
 
                 // handle FOR (break into 3)
@@ -120,6 +121,39 @@ ASTListNode* ASTree::parseBooleanExp() {
     return node;
 }
 
+ASTListNode* ASTree::parseFor() {
+    ASTListNode* node = new ASTListNode(ASTNodeType::FOR1);
+    _currCNode = _currCNode->sibling->sibling;  // skip paren
+
+    // convert num exp
+    ASTListNode* sibList = nullptr;
+    _currCNode = numPostfixConverter(_currCNode, sibList);
+    node->sibling = sibList;
+
+    // add FOR1
+    addNext(node);
+
+    node = new ASTListNode(ASTNodeType::FOR2);
+    _currCNode = _currCNode->sibling;  // skip semicolon
+    sibList = nullptr;
+    _currCNode = boolPostfixConverter(_currCNode, sibList);
+    node->sibling = sibList;
+
+    // add FOR2
+    addNext(node);
+
+    node = new ASTListNode(ASTNodeType::FOR3);
+    _currCNode = _currCNode->sibling;  // skip semicolon
+
+    sibList = nullptr;
+    _currCNode = numPostfixConverter(_currCNode, sibList);
+    _currCNode = _currCNode->child;
+    node->sibling = sibList;
+
+    // return FOR3
+    return node;
+}
+
 // clean up after, leave in blocks for needed debugging
 void ASTree::advance() {
     if (_currCNode->sibling) {
@@ -160,10 +194,12 @@ void ASTree::displayToken(TokenNode* currToken, ASTListNode*& _tokenStr, ASTList
     }
 }
 
-void ASTree::numPostfixConverter(TokenNode* currToken) {
+TokenNode* ASTree::numPostfixConverter(TokenNode*& currToken, ASTListNode*& _tokenStr) {
     std::stack<TokenNode*> _holdStack;
     bool _finished = false;  // looping flag
     TokenNode* topToken = nullptr;
+    ASTListNode* _tail = nullptr;
+    TokenNode* _retPosition = nullptr;
 
     // 'display' token meaning add to ASTree
     // function could return a pointer to a chain of AST nodes, handled upon return to caller
@@ -172,13 +208,19 @@ void ASTree::numPostfixConverter(TokenNode* currToken) {
     // movement loop
     // endNode must be a sibling, and have be set before function call
     for (; (currToken && currToken->type != TokenType::SEMICOLON); currToken = currToken->sibling) {
+        if (!currToken->sibling) {
+            _retPosition = currToken;                     // for handling returns once row is done
+            if (currToken->type == TokenType::R_PAREN) {  // end of for exp
+                break;
+            }
+        }
         switch (currToken->type) {
             case TokenType::INTEGER:
             case TokenType::IDENTIFIER:
             case TokenType::SINGLE_QUOTE:
             case TokenType::DOUBLE_QUOTE:
             case TokenType::STRING: {
-                displayToken(currToken);
+                displayToken(currToken, _tokenStr, _tail);
                 break;
             }
             case TokenType::L_PAREN: {
@@ -188,7 +230,7 @@ void ASTree::numPostfixConverter(TokenNode* currToken) {
             case TokenType::R_PAREN: {
                 topToken = _holdStack.top();
                 while (topToken->type != TokenType::L_PAREN) {
-                    displayToken(topToken);
+                    displayToken(topToken, _tokenStr, _tail);
                     _holdStack.pop();
                     if (!_holdStack.empty()) {
                         topToken = _holdStack.top();
@@ -214,7 +256,7 @@ void ASTree::numPostfixConverter(TokenNode* currToken) {
                                 if (!_holdStack.empty()) {
                                     topToken = _holdStack.top();
                                     if (isNumericOperator(topToken->type)) {
-                                        displayToken(topToken);
+                                        displayToken(topToken, _tokenStr, _tail);
                                         _holdStack.pop();
                                     } else {
                                         _holdStack.push(currToken);
@@ -237,7 +279,7 @@ void ASTree::numPostfixConverter(TokenNode* currToken) {
                                     if ((topToken->type == TokenType::ASTERISK) ||
                                         (topToken->type == TokenType::DIVIDE) ||
                                         (topToken->type == TokenType::MODULO)) {
-                                        displayToken(topToken);
+                                        displayToken(topToken, _tokenStr, _tail);
                                         _holdStack.pop();
                                     } else {
                                         _holdStack.push(currToken);
@@ -256,7 +298,7 @@ void ASTree::numPostfixConverter(TokenNode* currToken) {
                                 if (!_holdStack.empty()) {
                                     topToken = _holdStack.top();
                                     if (isNumericOperator(topToken->type)) {
-                                        displayToken(topToken);
+                                        displayToken(topToken, _tokenStr, _tail);
                                         _holdStack.pop();
                                         topToken = _holdStack.top();
 
@@ -288,10 +330,12 @@ void ASTree::numPostfixConverter(TokenNode* currToken) {
         // display token at top of stack
         // pop stack
         topToken = _holdStack.top();
-        displayToken(topToken);
+        displayToken(topToken, _tokenStr, _tail);
         _holdStack.pop();
     }
-    std::cout << std::endl;
+    // std::cout << std::endl;
+
+    return (_retPosition ? _retPosition : currToken);
 }
 
 TokenNode* ASTree::boolPostfixConverter(TokenNode*& currToken, ASTListNode*& _tokenStr) {

@@ -31,13 +31,15 @@ class ASTree {
     void advance();
     bool isDelimiter(TokenType type);
 
-    void numPostfixConverter(TokenNode *currToken);
+    TokenNode *numPostfixConverter(TokenNode *&currToken, ASTListNode *&_tokenStr);
     TokenNode *boolPostfixConverter(TokenNode *&currToken, ASTListNode *&_tokenStr);
     void displayToken(TokenNode *currToken);
     void displayToken(TokenNode *currToken, ASTListNode *&_tokenStr, ASTListNode *&_tail);
 
     ASTListNode *parseDeclaration();
     ASTListNode *parseBooleanExp();
+    ASTListNode *parseAssignment();
+    ASTListNode *parseFor();
 };
 
 #endif  // ASTREE_HPP
