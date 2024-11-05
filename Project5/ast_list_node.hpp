@@ -12,6 +12,7 @@ enum class ASTNodeType {
     ASSIGNMENT,
     RETURN,
     PRINTF,
+    CALL,
     IF,
     ELSE,
     WHILE,
@@ -35,6 +36,8 @@ static const char* typeToAString(ASTNodeType type) {
             return "RETURN";
         case ASTNodeType::PRINTF:
             return "PRINTF";
+        case ASTNodeType::CALL:
+            return "CALL";
         case ASTNodeType::IF:
             return "IF";
         case ASTNodeType::ELSE:
@@ -103,7 +106,7 @@ static const ASTNodeType tokenTypeToASType(TokenType type) {
 class ASTListNode {
    public:
     ASTListNode() = default;
-    ASTListNode(ASTNodeType type) : type(type), symbol(nullptr), lexeme(typeToAString(type)), token(nullptr) {};
+    ASTListNode(ASTNodeType type) : type(type), symbol(nullptr), lexeme(typeToAString(type)), token(nullptr), sibling(nullptr), child(nullptr) {};
 
     SymbolTableListNode* symbol;
     ASTNodeType type;

@@ -41,19 +41,30 @@ ASTree::ASTree(CSTree* cTree, SymbolTable* symTable) : cTree(cTree), symTable(sy
                 break;
             }
             case TokenType::PRINTF: {
-                advance();
-
+                while (_currCNode->type != TokenType::SEMICOLON) {
+                    advance();
+                }
                 // handle printf
                 break;
             }
             case TokenType::RETURN: {
-                advance();
+                while (_currCNode->type != TokenType::SEMICOLON) {
+                    advance();
+                }
 
                 // handle return ?
                 break;
             }
             case TokenType::IDENTIFIER: {
-                advance();
+                // can be: assignment OR function call
+                if (_currCNode->sibling->type == TokenType::L_PAREN) {
+                    addNext(parseCall());
+                } else {
+                    addNext(parseAssignment());
+                    advance();
+                }
+
+                // advance();
 
                 // handle identifier (+list) for postfix exp
                 break;
@@ -90,21 +101,32 @@ void ASTree::addNext(ASTListNode* node) {
     }
 }
 
+// clean up after, leave in blocks for needed debugging
+void ASTree::advance() {
+    // std::cout << "a " << _currCNode->lexeme << std::endl;
+    if (_currCNode->sibling) {
+        _currCNode = _currCNode->sibling;
+    } else if (_currCNode->child) {
+        _currCNode = _currCNode->child;
+    } else {
+        _currCNode = nullptr;
+    }
+    return;
+}
+
 ASTListNode* ASTree::parseDeclaration() {
     ASTListNode* node = new ASTListNode(ASTNodeType::DECLARATION);
 
     // reach identifer, should only be max twice (function + type + [name])
-    while (_currCNode->type != TokenType::IDENTIFIER) {
+    while (_currCNode->type != TokenType::IDENTIFIER && _currCNode->type != TokenType::MAIN) {
         advance();
     }
 
     node->symbol = symTable->find(_currCNode->lexeme);
     while (!isDelimiter(_currCNode->type)) {
-        // std::cout << _currCNode->lexeme << std::endl;
         advance();
     }
 
-    // std::cout << node->symbol->identifierName << " " << node->symbol->scope << std::endl;
     return node;
 }
 
@@ -154,16 +176,50 @@ ASTListNode* ASTree::parseFor() {
     return node;
 }
 
-// clean up after, leave in blocks for needed debugging
-void ASTree::advance() {
-    if (_currCNode->sibling) {
-        _currCNode = _currCNode->sibling;
-    } else if (_currCNode->child) {
-        _currCNode = _currCNode->child;
-    } else {
-        _currCNode = nullptr;
+ASTListNode* ASTree::parseCall() {
+    ASTListNode* node = new ASTListNode(ASTNodeType::CALL);
+    _currCNode = _currCNode->sibling->sibling;  // skip paren
+
+    ASTListNode* sibList = nullptr;
+    ASTListNode* lastSibling = nullptr;
+
+    // need to actually parse parameters
+    // could be: identifiers, nums, chars, strings, functions, arrays, etc.
+    while (_currCNode->type != TokenType::R_PAREN) {
+        if (_currCNode->type == TokenType::COMMA) {
+            advance();
+            continue;
+        }
+        ASTListNode* param = new ASTListNode(ASTNodeType::SIBLING);
+        param->token = _currCNode;
+        if (sibList == nullptr) {
+            sibList = param;
+        } else {
+            lastSibling->sibling = param;
+        }
+
+        lastSibling = param;
+        advance();
     }
-    return;
+
+    // skip );
+    _currCNode = _currCNode->sibling->child;
+    node->sibling = sibList;
+
+    // return CALL
+    return node;
+}
+
+ASTListNode* ASTree::parseAssignment() {
+    ASTListNode* node = new ASTListNode(ASTNodeType::ASSIGNMENT);
+
+    // convert exp
+    ASTListNode* sibList = nullptr;
+    _currCNode = numPostfixConverter(_currCNode, sibList);
+    node->sibling = sibList;
+
+    // return ASSIGNMENT
+    return node;
 }
 
 // for block delimiters, not handling multiline strings
@@ -217,6 +273,8 @@ TokenNode* ASTree::numPostfixConverter(TokenNode*& currToken, ASTListNode*& _tok
         switch (currToken->type) {
             case TokenType::INTEGER:
             case TokenType::IDENTIFIER:
+            case TokenType::TRUE:
+            case TokenType::FALSE:
             case TokenType::SINGLE_QUOTE:
             case TokenType::DOUBLE_QUOTE:
             case TokenType::STRING: {
@@ -359,6 +417,8 @@ TokenNode* ASTree::boolPostfixConverter(TokenNode*& currToken, ASTListNode*& _to
         switch (currToken->type) {
             case TokenType::INTEGER:
             case TokenType::IDENTIFIER:
+            case TokenType::TRUE:
+            case TokenType::FALSE:
             case TokenType::SINGLE_QUOTE:
             case TokenType::DOUBLE_QUOTE:
             case TokenType::STRING:

@@ -40,6 +40,7 @@ class ASTree {
     ASTListNode *parseBooleanExp();
     ASTListNode *parseAssignment();
     ASTListNode *parseFor();
+    ASTListNode *parseCall();
 };
 
 #endif  // ASTREE_HPP
