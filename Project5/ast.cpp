@@ -89,6 +89,9 @@ void ASTree::addNext(ASTListNode* node) {
         _current->child = node;
         _current = _current->child;
     }
+    while (_current->sibling) {
+        _current = _current->sibling;
+    }
 }
 
 // clean up after, leave in blocks for needed debugging

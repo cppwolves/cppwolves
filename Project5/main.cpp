@@ -207,41 +207,50 @@ void writeAST(ASTree &ast, const std::string &filename) {
     }
 
     int rowLength = 0;
-    std::cout << "here";
+    // std::cout << "here";
     ASTListNode *node = ast.head();
 
     while (node) {
         // Output the token lexeme
+        std::string str;
+        if (node->type == ASTNodeType::SIBLING) {
+            str = node->token->lexeme + " -> ";
+        } else {
+            str = node->lexeme + " -> ";
+        }
 
-        std::string str = node->lexeme + " -> ";
+        // std::string str = node->lexeme + " -> ";
         outputFile << str;
 
         // Update the row length
-        // rowLength += str.size();
+        rowLength += str.size();
 
-        // setting holder child bc nodes are currently aligned vertically
-        auto _hnode = node;
-        while (node->sibling) {
-            std::string str = node->sibling->token->lexeme + " -> ";
-            outputFile << str;
+        // If there is a sibling, continue.
+        if (node->sibling) {
             node = node->sibling;
+            continue;
         }
 
-        node = _hnode;
+        // Otherwise, print null and start a new row
+        outputFile << "NULL\n";
 
-        if (node->type == ASTNodeType::DECLARATION) {
-            std::string symLink = "[sym] " + node->symbol->identifierName;
-            outputFile << symLink << "\n";
+        // Subtract the current lexeme length to align the down pointer
 
-        } else {
-            // Otherwise, print null and start a new row
-            outputFile << "NULL\n";
-        }
+        rowLength -= node->type == ASTNodeType::SIBLING ? node->token->lexeme.size() : node->lexeme.size() + 2;
 
         // Output the down pointer, adding a new row for each component
-        outputFile << std::setw(2) << std::right << "|\n";
-        outputFile << std::setw(2) << std::right << "v\n"
+        outputFile << std::setw(rowLength) << std::right << "|\n";
+        outputFile << std::setw(rowLength) << std::right << "v\n"
                    << std::flush;
+
+        // Pad the next row with spaces to align the next token output
+        for (int ws = 0; ws < rowLength - 2; ++ws) {
+            outputFile << " ";
+        }
+
+        // Align the next output
+        rowLength -= 2;
+        std::cout << std::flush;
 
         // If there is no child, output NULL
         if (!node->child) {
