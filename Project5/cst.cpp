@@ -99,6 +99,7 @@ bool CSTree::isNewLine() const {
     case TokenType::SEMICOLON: {
       return true;
     }
+    default: {/* for warning */}
     }
   }
   return false;
@@ -156,6 +157,7 @@ void CSTree::handleOpenCloseDelimiters(TokenNode *node) {
     _openStack.pop();
     break;
   }
+  default: {/* for warning */}
   }
 }
 

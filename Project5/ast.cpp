@@ -308,6 +308,7 @@ void ASTree::displayToken(TokenNode* currToken, ASTListNode*& _tokenStr, ASTList
 TokenNode* ASTree::numPostfixConverter(TokenNode*& currToken, ASTListNode*& _tokenStr) {
     std::stack<TokenNode*> _holdStack;
     bool _finished = false;  // looping flag
+    bool _function = false;
     TokenNode* topToken = nullptr;
     ASTListNode* _tail = nullptr;
     TokenNode* _retPosition = nullptr;
@@ -327,7 +328,6 @@ TokenNode* ASTree::numPostfixConverter(TokenNode*& currToken, ASTListNode*& _tok
         }
         switch (currToken->type) {
             case TokenType::INTEGER:
-            case TokenType::IDENTIFIER:
             case TokenType::TRUE:
             case TokenType::FALSE:
             case TokenType::SINGLE_QUOTE:
@@ -339,20 +339,32 @@ TokenNode* ASTree::numPostfixConverter(TokenNode*& currToken, ASTListNode*& _tok
                 displayToken(currToken, _tokenStr, _tail);
                 break;
             }
+            case TokenType::IDENTIFIER: {
+                if (symTable->find(currToken->lexeme) && symTable->find(currToken->lexeme)->identifierType == TokenType::FUNCTION) {
+                    _function = true;
+                }
+                displayToken(currToken, _tokenStr, _tail);
+                break;
+            }
             case TokenType::L_PAREN: {
-                _holdStack.push(currToken);
+                (_function) ? displayToken(currToken, _tokenStr, _tail) : _holdStack.push(currToken);
                 break;
             }
             case TokenType::R_PAREN: {
-                topToken = _holdStack.top();
-                while (topToken->type != TokenType::L_PAREN) {
-                    displayToken(topToken, _tokenStr, _tail);
-                    _holdStack.pop();
-                    if (!_holdStack.empty()) {
-                        topToken = _holdStack.top();
+                if (_function) {
+                    displayToken(currToken, _tokenStr, _tail);
+                    _function = false;
+                } else {
+                    topToken = _holdStack.top();
+                    while (topToken->type != TokenType::L_PAREN) {
+                        displayToken(topToken, _tokenStr, _tail);
+                        _holdStack.pop();
+                        if (!_holdStack.empty()) {
+                            topToken = _holdStack.top();
+                        }
                     }
+                    _holdStack.pop();
                 }
-                _holdStack.pop();
                 break;
             }
             case TokenType::PLUS:
