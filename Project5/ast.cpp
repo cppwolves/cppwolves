@@ -195,6 +195,9 @@ ASTListNode* ASTree::parseCall() {
         }
         ASTListNode* param = new ASTListNode(ASTNodeType::SIBLING);
         param->token = _currCNode;
+        if (param->token->type == TokenType::IDENTIFIER) {
+            param->symbol = symTable->find(param->token->lexeme);
+        }
         if (sibList == nullptr) {
             sibList = param;
         } else {
@@ -330,7 +333,9 @@ TokenNode* ASTree::numPostfixConverter(TokenNode*& currToken, ASTListNode*& _tok
             case TokenType::SINGLE_QUOTE:
             case TokenType::DOUBLE_QUOTE:
             case TokenType::CHAR_LITERAL:
-            case TokenType::STRING: {
+            case TokenType::STRING:
+            case TokenType::L_BRACKET:
+            case TokenType::R_BRACKET: {
                 displayToken(currToken, _tokenStr, _tail);
                 break;
             }
