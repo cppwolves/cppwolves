@@ -469,6 +469,7 @@ TokenNode* ASTree::numPostfixConverter(TokenNode*& currToken, ASTListNode*& _tok
 TokenNode* ASTree::boolPostfixConverter(TokenNode*& currToken, ASTListNode*& _tokenStr) {
     std::stack<TokenNode*> _holdStack;
     bool _finished = false;  // looping flag
+    bool _function = false;
     TokenNode* topToken = nullptr;
     ASTListNode* _tail = nullptr;
     TokenNode* _retPosition = nullptr;
@@ -487,6 +488,11 @@ TokenNode* ASTree::boolPostfixConverter(TokenNode*& currToken, ASTListNode*& _to
         switch (currToken->type) {
             case TokenType::INTEGER:
             case TokenType::IDENTIFIER:
+                if (symTable->find(currToken->lexeme) && symTable->find(currToken->lexeme)->identifierType == TokenType::FUNCTION) {
+                    _function = true;
+                }
+                displayToken(currToken, _tokenStr, _tail);
+                break;
             case TokenType::TRUE:
             case TokenType::FALSE:
             case TokenType::SINGLE_QUOTE:
@@ -499,19 +505,25 @@ TokenNode* ASTree::boolPostfixConverter(TokenNode*& currToken, ASTListNode*& _to
                 break;
             }
             case TokenType::L_PAREN: {
-                _holdStack.push(currToken);
+                (_function) ? displayToken(currToken, _tokenStr, _tail) : _holdStack.push(currToken);
                 break;
             }
             case TokenType::R_PAREN: {
-                _finished = false;
-                while (!_finished) {
-                    topToken = _holdStack.top();
-                    if (topToken->type == TokenType::L_PAREN) {
-                        _holdStack.pop();
-                        _finished = true;
-                    } else {
-                        displayToken(topToken, _tokenStr, _tail);
-                        _holdStack.pop();
+                if (_function) {
+                    displayToken(currToken, _tokenStr, _tail);
+                    _function = false;
+                }
+                else {
+                    _finished = false;
+                    while (!_finished) {
+                        topToken = _holdStack.top();
+                        if (topToken->type == TokenType::L_PAREN) {
+                            _holdStack.pop();
+                            _finished = true;
+                        } else {
+                            displayToken(topToken, _tokenStr, _tail);
+                            _holdStack.pop();
+                        }
                     }
                 }
                 break;
