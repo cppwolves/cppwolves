@@ -1,0 +1,15 @@
+// ***************************************************
+// * CS460: Programming Assignment 1: Test Program 1 *
+// ***************************************************
+procedure main(void) {
+    int counter;
+
+    if (count != 0 && something == FALSE || (2 == 5) && (i + 6 == TRUE) || ((a+b) >= (4 % count) == 2)) {
+    }
+
+    counter = 2;
+    /*
+      counter = 100;
+    */
+    printf("counter = %d\n", counter);
+}
