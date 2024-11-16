@@ -8,6 +8,7 @@
 
 #include "ast.hpp"
 #include "cst.hpp"
+#include "interpreter.hpp"
 #include "symbol_table.hpp"
 #include "token_enum.hpp"
 #include "token_node.hpp"
@@ -286,6 +287,8 @@ int main(int argc, char *argv[]) {
 
             ASTree aTree(&tree, &symbolTable);
             writeAST(aTree, "ast_output.txt");
+
+            Interpreter interpreter(aTree, symbolTable);
         }
     } catch (const std::exception &ex) {
         std::cerr << ex.what() << "\n";
