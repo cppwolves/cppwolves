@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-Interpreter::Interpreter(ASTree& ast, SymbolTable& symTable) : ast(ast), symbolTable(symTable) {
-    current = ast.head();
+Interpreter::Interpreter(ASTree* ast, SymbolTable* symTable) : ast(ast), symbolTable(symTable) {
+    current = ast->head();
 
     while (current) {
         std::cout << current->lexeme;
@@ -13,6 +13,7 @@ Interpreter::Interpreter(ASTree& ast, SymbolTable& symTable) : ast(ast), symbolT
         std::cout << std::endl;
         advance();
     }
+    std::cout << "interpreter done" << std::endl;
 }
 
 void Interpreter::advance() {

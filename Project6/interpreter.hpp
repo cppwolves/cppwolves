@@ -8,11 +8,11 @@
 
 class Interpreter {
    public:
-    Interpreter(ASTree& ast, SymbolTable& symTable);
+    Interpreter(ASTree* ast, SymbolTable* symTable);
 
    private:
-    ASTree ast;
-    SymbolTable symbolTable;
+    ASTree* ast;
+    SymbolTable* symbolTable;
 
    private:
     ASTListNode* current;  // pc?

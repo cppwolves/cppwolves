@@ -288,7 +288,7 @@ int main(int argc, char *argv[]) {
             ASTree aTree(&tree, &symbolTable);
             writeAST(aTree, "ast_output.txt");
 
-            Interpreter interpreter(aTree, symbolTable);
+            Interpreter interpreter(&aTree, &symbolTable);
         }
     } catch (const std::exception &ex) {
         std::cerr << ex.what() << "\n";

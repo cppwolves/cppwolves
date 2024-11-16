@@ -29,7 +29,10 @@ ASTree::ASTree(CSTree* cTree, SymbolTable* symTable) : cTree(cTree), symTable(sy
                 break;
             }
             case TokenType::ELSE: {
-                addNext(new ASTListNode(ASTNodeType::ELSE));
+                auto node = new ASTListNode(ASTNodeType::ELSE);
+                node->token = _currCNode;
+
+                addNext(node);
                 advance();
                 break;
             }
@@ -117,6 +120,7 @@ ASTListNode* ASTree::parseDeclaration() {
     }
 
     node->symbol = symTable->find(_currCNode->lexeme);
+    node->token = _currCNode;
 
     // find either end of current dec, or end of line
     // or, if function, loop through parameter list
@@ -136,6 +140,7 @@ ASTListNode* ASTree::parseDeclaration() {
 // IF or WHILE
 ASTListNode* ASTree::parseBooleanExp() {
     ASTListNode* node = new ASTListNode(tokenTypeToASType(_currCNode->type));
+    node->token = _currCNode;
     advance();
 
     // convert exp
@@ -148,6 +153,7 @@ ASTListNode* ASTree::parseBooleanExp() {
 
 ASTListNode* ASTree::parseFor() {
     ASTListNode* node = new ASTListNode(ASTNodeType::FOR1);
+    node->token = _currCNode;
     _currCNode = _currCNode->sibling->sibling;  // skip paren
 
     // convert num exp
@@ -181,6 +187,7 @@ ASTListNode* ASTree::parseFor() {
 
 ASTListNode* ASTree::parseCall() {
     ASTListNode* node = new ASTListNode(ASTNodeType::CALL);
+    node->token = _currCNode;
     _currCNode = _currCNode->sibling->sibling;  // skip paren
 
     ASTListNode* sibList = nullptr;
@@ -218,6 +225,7 @@ ASTListNode* ASTree::parseCall() {
 
 ASTListNode* ASTree::parseAssignment() {
     ASTListNode* node = new ASTListNode(ASTNodeType::ASSIGNMENT);
+    node->token = _currCNode;
 
     // convert exp
     ASTListNode* sibList = nullptr;
@@ -230,6 +238,7 @@ ASTListNode* ASTree::parseAssignment() {
 
 ASTListNode* ASTree::parseReturn() {
     ASTListNode* node = new ASTListNode(ASTNodeType::RETURN);
+    node->token = _currCNode;
 
     // convert exp, doesnt work if assignment
     ASTListNode* sibList = nullptr;
@@ -242,6 +251,7 @@ ASTListNode* ASTree::parseReturn() {
 
 ASTListNode* ASTree::parsePrintf() {
     ASTListNode* node = new ASTListNode(ASTNodeType::PRINTF);
+    node->token = _currCNode;
 
     // skip ("
     _currCNode = _currCNode->sibling->sibling->sibling;
@@ -512,8 +522,7 @@ TokenNode* ASTree::boolPostfixConverter(TokenNode*& currToken, ASTListNode*& _to
                 if (_function) {
                     displayToken(currToken, _tokenStr, _tail);
                     _function = false;
-                }
-                else {
+                } else {
                     _finished = false;
                     while (!_finished) {
                         topToken = _holdStack.top();
