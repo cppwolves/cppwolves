@@ -2,22 +2,41 @@
 
 #include <iostream>
 
-Interpreter::Interpreter(ASTree* ast, SymbolTable* symTable) : ast(ast), symbolTable(symTable) {
+Interpreter::Interpreter(ASTree* ast, SymbolTable* symTable) : ast(ast), symbolTable(symTable), main(nullptr), current(nullptr) {
     current = ast->head();
+    size_t addressIdx = 0;  // not needed to store as member? can access with .size()
 
+    // address assignment
     while (current) {
-        std::cout << current->lexeme;
-        if (current->token) {
-            std::cout << " - " << current->token->lexeme;
+        if (current->type != ASTNodeType::BEGIN_BLOCK && current->type != ASTNodeType::END_BLOCK) {
+            // set symbolNode's address
+            if (current->type == ASTNodeType::DECLARATION) {
+                current->symbol->address = addressIdx;
+
+                // set program start point
+                if (current->token->type == TokenType::MAIN) {
+                    main = current;
+                }
+            }
+            _addresses.push_back(current);
+            addressIdx++;
         }
-        std::cout << std::endl;
-        advance();
+        advanceAddress();
     }
-    std::cout << "interpreter done" << std::endl;
 }
 
-void Interpreter::advance() {
-    // std::cout << "a " << _currCNode->lexeme << std::endl;
+void Interpreter::printAddresses() {
+    for (size_t i = 0; i < _addresses.size(); i++) {
+        std::cout << i << " " << _addresses[i]->lexeme;
+        if (_addresses[i]->token) {
+            std::cout << " - " << _addresses[i]->token->lexeme;
+        }
+        std::cout << std::endl;
+    }
+}
+
+// for traversing single node of AST at a time
+void Interpreter::advanceAST() {
     if (current->sibling) {
         current = current->sibling;
     } else if (current->child) {
@@ -25,5 +44,14 @@ void Interpreter::advance() {
     } else {
         current = nullptr;
     }
+    return;
+}
+
+// for traversing single row of AST at a time
+void Interpreter::advanceAddress() {
+    while (current->sibling) {
+        current = current->sibling;
+    }
+    current = current->child ? current->child : nullptr;
     return;
 }

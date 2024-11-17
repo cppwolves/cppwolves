@@ -14,10 +14,17 @@ class Interpreter {
     ASTree* ast;
     SymbolTable* symbolTable;
 
-   private:
     ASTListNode* current;  // pc?
+    ASTListNode* main;
     std::vector<ASTListNode*> _addresses;
-    void advance();
+
+   private:
+    void advanceAST();
+    void advanceAddress();
+
+    // testing
+   private:
+    void printAddresses();
 };
 
 #endif  // INTERPRETER_HPP

@@ -7,7 +7,7 @@ SymbolTableListNode::SymbolTableListNode(const std::string &identifierName,
                                          size_t arraySize)
     : identifierName(identifierName), scope(scope),
       identifierType(identifierType), datatype(datatype), isArray(isArray),
-      arraySize(arraySize) {}
+      arraySize(arraySize), address(0) {}
 
 SymbolTableListNode::~SymbolTableListNode() {
   SymbolTableListNode *curr = this->parameterList;
