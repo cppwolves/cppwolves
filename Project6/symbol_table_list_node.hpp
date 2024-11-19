@@ -24,6 +24,7 @@ public:
 
   size_t scope{};
   size_t arraySize{0};
+  int address{0};
 
   std::string identifierName{};
 
@@ -31,9 +32,7 @@ public:
   TokenType datatype{TokenType::INVALID_TOKEN};
 
   SymbolTableListNode *parameterList{nullptr};
-
-  int address{0};
-
+  
 };
 
 #endif // !SYBMOL_TABLE_LIST_NODE_HPP
