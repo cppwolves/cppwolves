@@ -8,12 +8,6 @@
 
 typedef SymbolTableListNode SymbolNode;
 
-struct Scope {
-  Scope(int val, bool used) : value(val), used(used) {}
-  int value;
-  bool used;
-};
-
 SymbolTable::SymbolTable(CSTree &cst)
     : _tableHead(nullptr), _currentSymbol(nullptr) {
   parseCST(cst);
@@ -44,7 +38,7 @@ SymbolNode *SymbolTable::find(const std::string &identifierName, int scope,
         SymbolNode *param = curr->parameterList;
         while (param) {
           if (param->identifierName == identifierName &&
-              param->identifierType == type) {
+              (findFirst || param->identifierType == type)) {
             return param;
           }
           param = param->next();
@@ -88,23 +82,23 @@ bool SymbolTable::contains(const std::string &identifierName, int scope,
 
 void SymbolTable::parseCST(CSTree &cst) {
   TokenNode *currToken = cst.head();
-  std::stack<Scope> scopeStack;
-  scopeStack.emplace(0, true);
-  size_t nextScope = 1;
+  std::stack<size_t> scopeStack{};
+  size_t currScope = 0;
+  scopeStack.push(currScope++);
 
   while (currToken) {
     if (isIdentifier(currToken->type)) {
       switch (currToken->type) {
       case TokenType::FUNCTION: {
-        scopeStack.emplace(nextScope++, true);
-        addNext(parseFunction(&currToken, scopeStack.top().value));
+        scopeStack.push(currScope++);
+        addNext(parseFunction(&currToken, scopeStack.top()));
         // Skip past L_BRACE
         currToken = currToken->child;
         break;
       }
       case TokenType::PROCEDURE: {
-        scopeStack.emplace(nextScope++, true);
-        addNext(parseProcedure(&currToken, scopeStack.top().value));
+        scopeStack.push(currScope++);
+        addNext(parseProcedure(&currToken, scopeStack.top()));
         // Skip past L_BRACE
         currToken = currToken->child;
         break;
@@ -112,10 +106,7 @@ void SymbolTable::parseCST(CSTree &cst) {
       default: {
         if (isDataType(currToken->type)) {
           // This is a new scope (not function or procedure)
-          if (!scopeStack.top().used) {
-            scopeStack.top().used = true;
-          }
-          addNext(parseDatatype(&currToken, scopeStack.top().value));
+          addNext(parseDatatype(&currToken, scopeStack.top()));
           if (currToken->type == TokenType::COMMA && currToken->sibling) {
             // This must be a declarator list: int i, j, k
             addNext(parseDeclaratorList(&currToken, _currentSymbol));
@@ -134,28 +125,16 @@ void SymbolTable::parseCST(CSTree &cst) {
       } // end switch type
     } else if (currToken->type == TokenType::L_BRACE) {
       // Update next candidate scope
-      scopeStack.emplace(nextScope++, false);
+      scopeStack.push(currScope++);
     } else if (currToken->type == TokenType::R_BRACE) {
       // The current scope has ended
-      Scope last = scopeStack.top();
       scopeStack.pop();
-
-      if (!last.used) {
-        // No symbol was added in the previous scope
-        if (_currentSymbol && last.value < _currentSymbol->scope) {
-          // Go to the next available scope
-          nextScope = _currentSymbol->scope + 1;
-        } else {
-          // Reuse the last unused scope
-          nextScope = last.value;
-        }
-      }
     }
     currToken = currToken->child;
   }
 
   // Only the global scope should be left on the stack
-  assert(scopeStack.size() == 1 && scopeStack.top().value == 0 &&
+  assert(scopeStack.size() == 1 && scopeStack.top() == 0 &&
          "Scope stack is not correctly aligned");
 }
 
