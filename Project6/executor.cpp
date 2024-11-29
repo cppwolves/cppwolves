@@ -119,13 +119,13 @@ void Executor::executeProcedure(ASTListNode* node) {
 }
 
 void Executor::executeBlock(ASTListNode* node) {
-    callStack.emplace_back(); // New scope
+    callStack.emplace_back();  // New scope
     ASTListNode* childNode = node;
     while (childNode) {
         executeNode(childNode);
         childNode = childNode->child;
     }
-    callStack.pop_back(); // End scope
+    callStack.pop_back();  // End scope
 }
 
 Executor::Value Executor::evaluateExpression(ASTListNode* node) {
@@ -249,4 +249,159 @@ Executor::Value Executor::getVariable(const std::string& name) {
     }
     // Variable not found; handle error or return default value
     return 0;
+}
+
+// actual execution of this cant be finished until you guys decide how to handle runtime values
+// note to jacob: varient types seem to add a lot of weird overhead to handle the possibilites correctly
+// i'd reconsider if they're worth it
+Executor::Value Executor::evaluateNumExpPostfix(ASTListNode* node) {
+    std::stack<int> stack;
+
+    // lazy way to hold first val for postfix exp in assignment statements
+    // if assignment operator is never seen, this is irrelevant (in a good way)
+    auto assignmentTarget = node;
+
+    while (node) {
+        if (isNumber(node->token->lexeme)) {
+            stack.push(std::stoi(node->token->lexeme));
+        } else if (node->token->type == TokenType::IDENTIFIER) {
+            // check if next token is L-PAREN, means this is a function call
+            // needs to be recursivly handled before postfix eval can continue
+            // whatever value that resolves to gets pushed to the stack
+
+            // push identifier's value onto the stack
+            // ex: stack.push(std::stoi(node->symbol->token->lexeme));
+
+        } else if (node->token->type == TokenType::ASSIGNMENT_OPERATOR) {
+            // assign runtime value of identifier
+            // ex: assignmentTarget->symbol->value = stack.top();
+            // leaves stack empty, which is maybe fine to assume only bc no assignments inside of statements?
+            stack.pop();
+
+        } else {
+            // is operator
+            auto [lhs, rhs] = getTwoThingsFromStack(stack);
+
+            switch (node->token->type) {
+                case TokenType::PLUS:
+                    stack.push(lhs + rhs);
+                    break;
+                case TokenType::MINUS:
+                    stack.push(lhs + rhs);
+                    break;
+                case TokenType::ASTERISK:
+                    stack.push(lhs * rhs);
+                    break;
+                case TokenType::DIVIDE:
+                    stack.push(lhs / rhs);
+                    break;
+                case TokenType::MODULO:
+                    stack.push(lhs % rhs);
+                    break;
+                default:
+                    // err
+            }
+        }
+
+        node = node->sibling;
+    }
+
+    // return:
+    // postfix exp was being evaulated and result gets returned
+    // OR
+    // postfix was for an assignment, return a placeholder value
+    // doesnt matter what since its never used
+
+    return (stack.empty()) ? 0 : stack.top();
+}
+
+// essentially the same as evaluateNumExpPostfix
+// using an int stack bc implicit convertions exists, yay
+Executor::Value Executor::evaluateBooleanExpPostfix(ASTListNode* node) {
+    std::stack<int> stack;
+
+    // lazy way to hold first val for postfix exp in assignment statements
+    // if assignment operator is never seen, this is irrelevant (in a good way)
+    auto assignmentTarget = node;
+
+    while (node) {
+        if (node->token->type == TokenType::TRUE) {
+            stack.push(1);
+        } else if (node->token->type == TokenType::FALSE) {
+            stack.push(0);
+        } else if (node->token->type == TokenType::IDENTIFIER) {
+            // check if next token is L-PAREN, means this is a function call
+            // needs to be recursivly handled before postfix eval can continue
+            // whatever value that resolves to gets pushed to the stack
+
+            // push identifier's value onto the stack
+            // ex: stack.push(std::stoi(node->symbol->token->lexeme));
+
+        } else if (node->token->type == TokenType::ASSIGNMENT_OPERATOR) {
+            // assign runtime value of identifier
+            // ex: assignmentTarget->symbol->value = stack.top();
+
+            stack.pop();
+
+        } else {
+            // is operator
+            auto [lhs, rhs] = getTwoThingsFromStack(stack);
+
+            switch (node->token->type) {
+                case TokenType::GT:
+                    stack.push(lhs > rhs);
+                    break;
+                case TokenType::GT_EQUAL:
+                    stack.push(lhs >= rhs);
+                    break;
+                case TokenType::LT:
+                    stack.push(lhs < rhs);
+                    break;
+                case TokenType::LT_EQUAL:
+                    stack.push(lhs <= rhs);
+                    break;
+                case TokenType::BOOLEAN_AND:
+                    stack.push(lhs && rhs);
+                    break;
+                case TokenType::BOOLEAN_OR:
+                    stack.push(lhs || rhs);
+                    break;
+                case TokenType::BOOLEAN_EQUAL:
+                    stack.push(lhs == rhs);
+                    break;
+                case TokenType::BOOLEAN_NOT_EQUAL:
+                    stack.push(lhs != rhs);
+                    break;
+                default:
+                    // err
+            }
+        }
+
+        node = node->sibling;
+    }
+
+    // return:
+    // postfix exp was being evaulated and result gets returned
+    // OR
+    // postfix was for an assignment, return a placeholder value
+    // doesnt matter what since its never used
+
+    return (stack.empty()) ? 0 : stack.top();
+}
+
+bool Executor::isNumber(std::string& str) {
+    try {
+        std::stoi(str);
+        return true;
+    } catch (const std::exception& e) {
+        return false;
+    }
+}
+
+std::pair<int, int> Executor::getTwoThingsFromStack(std::stack<int>& stack) {
+    int lhs = stack.top();
+    stack.pop();
+    int rhs = stack.top();
+    stack.pop();
+    return {lhs, rhs};
 }

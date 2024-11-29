@@ -10,11 +10,11 @@
 #include "token_enum.hpp"
 
 class Executor {
-public:
+   public:
     Executor(ASTree* ast, SymbolTable* symbolTable);
     void execute();
 
-private:
+   private:
     // Variant type to store different possible values
     using Value = std::variant<int, char, bool, std::string>;
 
@@ -25,6 +25,12 @@ private:
     Value evaluateUnaryExpression(ASTListNode* node);
     Value evaluateIdentifier(ASTListNode* node);
     Value evaluateLiteral(ASTListNode* node);
+
+    // silvia, rename/alter as needed
+    Value evaluateNumExpPostfix(ASTListNode* node);
+    Value evaluateBooleanExpPostfix(ASTListNode* node);
+    bool isNumber(std::string& str);
+    std::pair<int, int> getTwoThingsFromStack(std::stack<int>& stack);
 
     // Execution functions for different AST node types
     void executeDeclaration(ASTListNode* node);
@@ -47,7 +53,7 @@ private:
     void setVariable(const std::string& name, const Value& value);
     Value getVariable(const std::string& name);
 
-private:
+   private:
     ASTree* ast;
     SymbolTable* symbolTable;
     ASTListNode* currentNode;
@@ -56,4 +62,4 @@ private:
     std::vector<std::unordered_map<std::string, Value>> callStack;
 };
 
-#endif // EXECUTOR_HPP
+#endif  // EXECUTOR_HPP
