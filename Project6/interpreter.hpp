@@ -9,6 +9,7 @@
 class Interpreter {
    public:
     Interpreter(ASTree* ast, SymbolTable* symTable);
+    ASTListNode* getAddressAtInd(int index);
 
    private:
     ASTree* ast;

@@ -3,7 +3,7 @@
 
 #include "list_node.hpp"
 #include "token_enum.hpp"
-
+#include <variant>
 #include <string>
 
 class SymbolTableListNode : public ListNode<SymbolTableListNode> {
@@ -20,6 +20,10 @@ public:
   SymbolTableListNode *removeParameter(const std::string &identiferName);
 
 public:
+    // Variant type to store different possible values
+    using Value = std::variant<int, char, bool, std::string>;
+    Value value;
+
   bool isArray{false};
 
   size_t scope{};

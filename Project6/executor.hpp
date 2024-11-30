@@ -4,14 +4,14 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
-
+#include "interpreter.hpp"
 #include "ast.hpp"
 #include "symbol_table.hpp"
 #include "token_enum.hpp"
 
 class Executor {
 public:
-    Executor(ASTree* ast, SymbolTable* symbolTable);
+    Executor(ASTree* ast, SymbolTable* symbolTable, Interpreter interpreter);
     void execute();
 
 private:
@@ -25,6 +25,12 @@ private:
     Value evaluateUnaryExpression(ASTListNode* node);
     Value evaluateIdentifier(ASTListNode* node);
     Value evaluateLiteral(ASTListNode* node);
+
+    // silvia, rename/alter as needed
+    Value evaluateNumExpPostfix(ASTListNode* node);
+    Value evaluateBooleanExpPostfix(ASTListNode* node);
+    bool isNumber(std::string& str);
+    std::pair<int, int> getTwoThingsFromStack(std::stack<int>& stack);
 
     // Execution functions for different AST node types
     void executeDeclaration(ASTListNode* node);
@@ -51,9 +57,17 @@ private:
     ASTree* ast;
     SymbolTable* symbolTable;
     ASTListNode* currentNode;
+    Interpreter interpreter;
 
     // Call stack for function calls, mostly ignore this I am playing around with how to use it properly right now. Any suggestions are welcome.
     std::vector<std::unordered_map<std::string, Value>> callStack;
+
+    // either astnodes or just integers that are used to index the vector of addresses?  I'm not sure
+    std::stack<ASTListNode> programCounter;
+
+    // not sure if this should be nodes or the actual values
+    std::stack<ASTListNode> expStack;
+
 };
 
 #endif // EXECUTOR_HPP

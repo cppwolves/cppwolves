@@ -23,6 +23,8 @@ Interpreter::Interpreter(ASTree* ast, SymbolTable* symTable) : ast(ast), symbolT
         }
         advanceAddress();
     }
+
+    //printAddresses();
 }
 
 void Interpreter::printAddresses() {
@@ -54,4 +56,9 @@ void Interpreter::advanceAddress() {
     }
     current = current->child ? current->child : nullptr;
     return;
+}
+
+
+ASTListNode* Interpreter::getAddressAtInd(int index) {
+    return _addresses.at(index);
 }

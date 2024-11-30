@@ -3,17 +3,24 @@
 #include <iostream>
 #include <stack>
 
-Executor::Executor(ASTree* ast, SymbolTable* symbolTable)
-    : ast(ast), symbolTable(symbolTable), currentNode(nullptr) {
+
+Executor::Executor(ASTree* ast, SymbolTable* symbolTable, Interpreter interpreter)
+        : ast(ast), symbolTable(symbolTable), currentNode(nullptr), interpreter(interpreter) {
     // Initialize the call stack with the global scope
     callStack.emplace_back();
 }
 
 void Executor::execute() {
     currentNode = ast->head();
+
     while (currentNode) {
         executeNode(currentNode);
-        currentNode = currentNode->child;
+
+        if (currentNode->sibling) {
+            currentNode = currentNode->sibling;
+        } else {
+            currentNode = currentNode->child;
+        }
     }
 }
 
@@ -40,7 +47,16 @@ void Executor::executeNode(ASTListNode* node) {
         case ASTNodeType::RETURN:
             executeReturn(node);
             break;
+        case ASTNodeType::SIBLING:
+            //std::cout << "Found sibling token." << std::endl;
+
+            if (symbolTable->find(node->token->lexeme) && symbolTable->find(node->token->lexeme)->identifierType == TokenType::FUNCTION) {
+                executeFunction(node);
+            }
+            break;
         case ASTNodeType::CALL:
+            std::cout << "Found call token." << std::endl;
+
             executeFunction(node);
             break;
         case ASTNodeType::BEGIN_BLOCK:
@@ -111,7 +127,31 @@ void Executor::executeReturn(ASTListNode* node) {
 }
 
 void Executor::executeFunction(ASTListNode* node) {
-    // Handle function calls
+    ASTListNode* functionNode = interpreter.getAddressAtInd(symbolTable->find(node->token->lexeme)->address);
+    SymbolTableListNode* curParamNode = functionNode->symbol->parameterList;
+    node = node->sibling;
+
+    while(curParamNode) {
+        curParamNode->value = symbolTable->find(node->token->lexeme, node->symbol->scope)->value;
+        curParamNode = curParamNode->next();
+        node = node->sibling;
+
+        // push node to program counter, or just set currentNode to node?
+    }
+
+    while (functionNode->type != ASTNodeType::RETURN) {
+        executeNode(functionNode);
+        if (functionNode->sibling) {
+            functionNode = functionNode->sibling;
+        }
+        else {
+            functionNode = functionNode->child;
+        }
+    }
+
+    executeReturn(functionNode);
+
+    //std::cout << "End of execute function." << std::endl;
 }
 
 void Executor::executeProcedure(ASTListNode* node) {
@@ -119,13 +159,13 @@ void Executor::executeProcedure(ASTListNode* node) {
 }
 
 void Executor::executeBlock(ASTListNode* node) {
-    callStack.emplace_back(); // New scope
+    callStack.emplace_back();  // New scope
     ASTListNode* childNode = node;
     while (childNode) {
         executeNode(childNode);
         childNode = childNode->child;
     }
-    callStack.pop_back(); // End scope
+    callStack.pop_back();  // End scope
 }
 
 Executor::Value Executor::evaluateExpression(ASTListNode* node) {
@@ -249,4 +289,159 @@ Executor::Value Executor::getVariable(const std::string& name) {
     }
     // Variable not found; handle error or return default value
     return 0;
+}
+
+// actual execution of this cant be finished until you guys decide how to handle runtime values
+// note to jacob: varient types seem to add a lot of weird overhead to handle the possibilites correctly
+// i'd reconsider if they're worth it
+Executor::Value Executor::evaluateNumExpPostfix(ASTListNode* node) {
+    std::stack<int> stack;
+
+    // lazy way to hold first val for postfix exp in assignment statements
+    // if assignment operator is never seen, this is irrelevant (in a good way)
+    auto assignmentTarget = node;
+
+    while (node) {
+        if (isNumber(node->token->lexeme)) {
+            stack.push(std::stoi(node->token->lexeme));
+        } else if (node->token->type == TokenType::IDENTIFIER) {
+            // check if next token is L-PAREN, means this is a function call
+            // needs to be recursivly handled before postfix eval can continue
+            // whatever value that resolves to gets pushed to the stack
+
+            // push identifier's value onto the stack
+            // ex: stack.push(std::stoi(node->symbol->token->lexeme));
+
+        } else if (node->token->type == TokenType::ASSIGNMENT_OPERATOR) {
+            // assign runtime value of identifier
+            // ex: assignmentTarget->symbol->value = stack.top();
+            // leaves stack empty, which is maybe fine to assume only bc no assignments inside of statements?
+            stack.pop();
+
+        } else {
+            // is operator
+            auto [lhs, rhs] = getTwoThingsFromStack(stack);
+
+            switch (node->token->type) {
+                case TokenType::PLUS:
+                    stack.push(lhs + rhs);
+                    break;
+                case TokenType::MINUS:
+                    stack.push(lhs + rhs);
+                    break;
+                case TokenType::ASTERISK:
+                    stack.push(lhs * rhs);
+                    break;
+                case TokenType::DIVIDE:
+                    stack.push(lhs / rhs);
+                    break;
+                case TokenType::MODULO:
+                    stack.push(lhs % rhs);
+                    break;
+                default:
+                    break;// err
+            }
+        }
+
+        node = node->sibling;
+    }
+
+    // return:
+    // postfix exp was being evaulated and result gets returned
+    // OR
+    // postfix was for an assignment, return a placeholder value
+    // doesnt matter what since its never used
+
+    return (stack.empty()) ? 0 : stack.top();
+}
+
+// essentially the same as evaluateNumExpPostfix
+// using an int stack bc implicit convertions exists, yay
+Executor::Value Executor::evaluateBooleanExpPostfix(ASTListNode* node) {
+    std::stack<int> stack;
+
+    // lazy way to hold first val for postfix exp in assignment statements
+    // if assignment operator is never seen, this is irrelevant (in a good way)
+    auto assignmentTarget = node;
+
+    while (node) {
+        if (node->token->type == TokenType::TRUE) {
+            stack.push(1);
+        } else if (node->token->type == TokenType::FALSE) {
+            stack.push(0);
+        } else if (node->token->type == TokenType::IDENTIFIER) {
+            // check if next token is L-PAREN, means this is a function call
+            // needs to be recursivly handled before postfix eval can continue
+            // whatever value that resolves to gets pushed to the stack
+
+            // push identifier's value onto the stack
+            // ex: stack.push(std::stoi(node->symbol->token->lexeme));
+
+        } else if (node->token->type == TokenType::ASSIGNMENT_OPERATOR) {
+            // assign runtime value of identifier
+            // ex: assignmentTarget->symbol->value = stack.top();
+
+            stack.pop();
+
+        } else {
+            // is operator
+            auto [lhs, rhs] = getTwoThingsFromStack(stack);
+
+            switch (node->token->type) {
+                case TokenType::GT:
+                    stack.push(lhs > rhs);
+                    break;
+                case TokenType::GT_EQUAL:
+                    stack.push(lhs >= rhs);
+                    break;
+                case TokenType::LT:
+                    stack.push(lhs < rhs);
+                    break;
+                case TokenType::LT_EQUAL:
+                    stack.push(lhs <= rhs);
+                    break;
+                case TokenType::BOOLEAN_AND:
+                    stack.push(lhs && rhs);
+                    break;
+                case TokenType::BOOLEAN_OR:
+                    stack.push(lhs || rhs);
+                    break;
+                case TokenType::BOOLEAN_EQUAL:
+                    stack.push(lhs == rhs);
+                    break;
+                case TokenType::BOOLEAN_NOT_EQUAL:
+                    stack.push(lhs != rhs);
+                    break;
+                default:
+                    break;// err
+            }
+        }
+
+        node = node->sibling;
+    }
+
+    // return:
+    // postfix exp was being evaulated and result gets returned
+    // OR
+    // postfix was for an assignment, return a placeholder value
+    // doesnt matter what since its never used
+
+    return (stack.empty()) ? 0 : stack.top();
+}
+
+bool Executor::isNumber(std::string& str) {
+    try {
+        std::stoi(str);
+        return true;
+    } catch (const std::exception& e) {
+        return false;
+    }
+}
+
+std::pair<int, int> Executor::getTwoThingsFromStack(std::stack<int>& stack) {
+    int lhs = stack.top();
+    stack.pop();
+    int rhs = stack.top();
+    stack.pop();
+    return {lhs, rhs};
 }
