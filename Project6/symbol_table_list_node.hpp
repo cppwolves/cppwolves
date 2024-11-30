@@ -5,6 +5,7 @@
 #include "token_enum.hpp"
 #include <variant>
 #include <string>
+#include "executor.hpp"
 
 class SymbolTableListNode : public ListNode<SymbolTableListNode> {
 public:
@@ -21,8 +22,8 @@ public:
 
 public:
     // Variant type to store different possible values
-    using Value = std::variant<int, char, bool, std::string>;
-    Value value;
+    //using Value = std::variant<int, char, bool, std::string>;
+    Executor::Value value;
 
   bool isArray{false};
 

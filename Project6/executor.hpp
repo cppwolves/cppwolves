@@ -14,9 +14,10 @@ public:
     Executor(ASTree* ast, SymbolTable* symbolTable, Interpreter interpreter);
     void execute();
 
+    using Value = std::variant<int, char, bool, std::string>;
+
 private:
     // Variant type to store different possible values
-    using Value = std::variant<int, char, bool, std::string>;
 
     // Helper functions
     void executeNode(ASTListNode* node);
