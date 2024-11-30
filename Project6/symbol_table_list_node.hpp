@@ -5,39 +5,38 @@
 #include "token_enum.hpp"
 #include <variant>
 #include <string>
-#include "executor.hpp"
 
 class SymbolTableListNode : public ListNode<SymbolTableListNode> {
 public:
-  SymbolTableListNode() = default;
-  SymbolTableListNode(const std::string &identifierName, size_t scope,
-                      TokenType identifierType, TokenType datatype,
-                      bool isArray, size_t arraySize);
-  virtual ~SymbolTableListNode() override;
+    SymbolTableListNode() = default;
+    SymbolTableListNode(const std::string &identifierName, size_t scope,
+                        TokenType identifierType, TokenType datatype,
+                        bool isArray, size_t arraySize);
+    virtual ~SymbolTableListNode() override;
 
-  SymbolTableListNode *link(SymbolTableListNode *symbol);
+    SymbolTableListNode *link(SymbolTableListNode *symbol);
 
-  SymbolTableListNode *addParameter(SymbolTableListNode *symbol);
-  SymbolTableListNode *removeParameter(const std::string &identiferName);
+    SymbolTableListNode *addParameter(SymbolTableListNode *symbol);
+    SymbolTableListNode *removeParameter(const std::string &identiferName);
 
 public:
     // Variant type to store different possible values
-    //using Value = std::variant<int, char, bool, std::string>;
-    Executor::Value value;
+    using Value = std::variant<int, char, bool, std::string>;
+    Value value;
 
-  bool isArray{false};
+    bool isArray{false};
 
-  size_t scope{};
-  size_t arraySize{0};
-  int address{0};
+    size_t scope{};
+    size_t arraySize{0};
+    int address{0};
 
-  std::string identifierName{};
+    std::string identifierName{};
 
-  TokenType identifierType{TokenType::INVALID_TOKEN};
-  TokenType datatype{TokenType::INVALID_TOKEN};
+    TokenType identifierType{TokenType::INVALID_TOKEN};
+    TokenType datatype{TokenType::INVALID_TOKEN};
 
-  SymbolTableListNode *parameterList{nullptr};
-  
+    SymbolTableListNode *parameterList{nullptr};
+
 };
 
 #endif // !SYBMOL_TABLE_LIST_NODE_HPP
