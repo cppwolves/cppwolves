@@ -2,17 +2,14 @@
 // * CS460: Programming Assignment 6: Test Program 1 *
 // ***************************************************
 
-function int sum_of_first_n_squares (int n)
+function int return_math (int n)
 {
-  int sum;
+  int value;
 
-  sum = 0;
-  if (n >= 1)
-  {
-    sum = n * (n + 1) * (2 * n + 1) / 6;
-  }
+  value = 0;
+  value = n*8;
 
-  return sum;
+  return value;
 }
   
 procedure main (void)
@@ -20,9 +17,10 @@ procedure main (void)
   int n;
   int sum;
 
-  n = 100;
-  sum = sum_of_first_n_squares (n);
+  n = 8;
+  sum = return_math (n);
   printf ("sum of the squares of the first %d numbers = %d\n", n, sum);
-  printf ("Testing");
+  printf ("Testing\n", n, sum);
   printf ("New");
+  printf ("Old");
 }

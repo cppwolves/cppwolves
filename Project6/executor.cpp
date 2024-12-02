@@ -120,36 +120,58 @@ void Executor::executeFor(ASTListNode* node) {
 }
 
 void Executor::executePrintf() {
+    // Move to the sibling containing the format string
     currentNode = currentNode->sibling;
     std::string formatString = currentNode->token->lexeme;
 
-    //advance to first argument
+    // Advance to the first argument
     currentNode = currentNode->sibling;
     std::vector<Value> args;
 
+    // Collect arguments
     while (currentNode) {
         args.emplace_back(symbolTable->find(currentNode->token->lexeme)->value);
-        //currentNode = currentNode->sibling;
-
         if (currentNode->sibling == nullptr) {
             break;
-        }
-        else {
+        } else {
             currentNode = currentNode->sibling;
         }
     }
 
     int arg_count = 0;
-    // For simplicity, assume all arguments are integers
-    for (std::string::iterator it = formatString.begin(); it != formatString.end(); it++)
-    {
-        if (*it != '%')
-        {
+
+    // Process the format string
+    for (std::string::iterator it = formatString.begin(); it != formatString.end(); ++it) {
+        if (*it == '\\') {
+            // Handle escaped characters
+            ++it;
+            if (it == formatString.end()) break;
+
+            if (*it == 'n') {
+                putchar('\n'); // Newline for escaped '\n'
+                continue;
+            }
+
+            // Print other escaped sequences literally (e.g., \t, \\)
+            putchar('\\');
             putchar(*it);
             continue;
         }
-        switch (*++it)
-        {
+
+        if (*it == '\n') {
+            // Handle literal newline character
+            putchar('\n');
+            continue;
+        }
+
+        if (*it != '%') {
+            // Print non-format characters as-is
+            putchar(*it);
+            continue;
+        }
+
+        // Handle format specifiers
+        switch (*++it) {
             case 'd':
                 printf("%d", std::get<int>(args[arg_count]));
                 break;
@@ -157,13 +179,14 @@ void Executor::executePrintf() {
                 printf("%s", std::get<std::string>(args[arg_count]).c_str());
                 break;
             default:
-                putchar(*it);
+                putchar(*it); // Print unknown format specifier as-is
                 break;
         }
 
         arg_count++;
     }
 }
+
 
 Executor::Value Executor::executeReturn() {
     Value returnValue = 0;
