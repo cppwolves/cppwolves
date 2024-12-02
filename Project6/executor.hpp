@@ -37,14 +37,14 @@ private:
 
     // Execution functions for different AST node types
     void executeDeclaration(ASTListNode* node);
-    void executeAssignment(ASTListNode* node);
+    void executeAssignment();
     void executeIf();
-    void executeWhile(ASTListNode* node);
-    void executeFor(ASTListNode* node);
+    void executeWhile();
+    void executeFor();
     void executePrintf();
     Value executeReturn();
     Value executeFunction();
-    void executeProcedure(ASTListNode* node);
+    void executeProcedure();
     void executeBlock();
 
     // Utility functions
