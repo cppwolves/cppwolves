@@ -27,16 +27,16 @@ void Executor::executeNode(ASTListNode* node) {
             //executeDeclaration(node);
             break;
         case ASTNodeType::ASSIGNMENT:
-            executeAssignment(node);
+            executeAssignment();
             break;
         case ASTNodeType::IF:
             executeIf();
             break;
         case ASTNodeType::WHILE:
-            executeWhile(node);
+            executeWhile();
             break;
         case ASTNodeType::FOR1:
-            executeFor(node);
+            executeFor();
             break;
         case ASTNodeType::PRINTF:
             executePrintf();
@@ -52,9 +52,7 @@ void Executor::executeNode(ASTListNode* node) {
             }
             break;
         case ASTNodeType::CALL:
-            std::cout << "Found call token." << std::endl;
-
-            executeFunction();
+            executeProcedure();
             break;
         case ASTNodeType::BEGIN_BLOCK:
             //callStack.emplace_back();
@@ -74,14 +72,14 @@ void Executor::executeDeclaration(ASTListNode* node) {
     //setVariable(varName, 0);
 }
 
-void Executor::executeAssignment(ASTListNode* node) {
+void Executor::executeAssignment() {
     // need to move to first node in expression
     currentNode = currentNode->sibling;
 
     // save current node to update its value
     ASTListNode* nodeToBeAssigned = currentNode;
     currentNode = currentNode->sibling;
-    nodeToBeAssigned->symbol->value  = evaluateNumExpPostfix();
+    nodeToBeAssigned->symbol->value = evaluateNumExpPostfix();
 
     // assume for now that curentNode is at assignment operator after
     // evaluateNumExpPostfix, else we need to move currentNode to last sibling here
@@ -89,60 +87,189 @@ void Executor::executeAssignment(ASTListNode* node) {
 }
 
 void Executor::executeIf() {
+    int bracketCount = 0;
+
     currentNode = currentNode->sibling;
     bool condition = evaluateBooleanExpPostfix();
     if (condition) {
         executeBlock();
+
+        if (currentNode->child->type == ASTNodeType::ELSE) {
+            currentNode = currentNode->child->child;
+            //advance past else to first bracket
+            bracketCount++;
+            while (bracketCount > 0) {
+                if (currentNode->sibling) {
+                    currentNode = currentNode->sibling;
+                }
+                else {
+                    currentNode = currentNode->child;
+                    if (currentNode->type == ASTNodeType::BEGIN_BLOCK) {
+                        bracketCount++;
+                    }
+                    else if (currentNode->type == ASTNodeType::END_BLOCK) {
+                        bracketCount--;
+                    }
+                }
+            }
+        }
     }
-    // else if (currentNode->sibling->sibling && currentNode->sibling->sibling->type == ASTNodeType::ELSE) {
-    //     executeBlock(currentNode->sibling->sibling->child);
-    // }
+    else {
+        //if condition false, need to advance past the if block to the APPROPRIATE end_block
+        while (currentNode->type != ASTNodeType::END_BLOCK) {
+            if (currentNode->sibling) {
+                currentNode = currentNode->sibling;
+            }
+            else {
+                currentNode = currentNode->child;
+            }
+        }
+        //std::cout << "cond false" << std::endl;
+        if (currentNode->child->type == ASTNodeType::ELSE) {
+            //std::cout << "else exec" << std::endl;
+            executeBlock();
+            //currentNode = currentNode->child;
+        }
+    }
 }
 
-void Executor::executeWhile(ASTListNode* node) {
-    while (isTrue(evaluateExpression(node->sibling))) {
+void Executor::executeWhile() {
+    int bracketCount = 0;
+    currentNode = currentNode->sibling;
+    ASTListNode* conditionNode = currentNode;
+    ASTListNode* whileEndNode = nullptr;
+    bool condition = evaluateBooleanExpPostfix();
+
+    while (condition) {
         executeBlock();
+        whileEndNode = currentNode;
+        currentNode = conditionNode;
+        condition = evaluateBooleanExpPostfix();
     }
+
+    //once it fails move to end
+    if (whileEndNode) {
+        currentNode = whileEndNode;
+    }
+    else {
+        //advance past first bracket
+        currentNode = currentNode->child;
+        bracketCount++;
+
+        while (bracketCount > 0) {
+            if (currentNode->sibling) {
+                currentNode = currentNode->sibling;
+            }
+            else {
+                currentNode = currentNode->child;
+                if (currentNode->type == ASTNodeType::BEGIN_BLOCK) {
+                    bracketCount++;
+                }
+                else if (currentNode->type == ASTNodeType::END_BLOCK) {
+                    bracketCount--;
+                }
+            }
+        }
+    }
+
 }
 
-void Executor::executeFor(ASTListNode* node) {
+void Executor::executeFor() {
+    int bracketCount = 0;
+    ASTListNode* forEndNode = nullptr;
+
     // For node is split into FOR1, FOR2, FOR3
     // FOR1: Initialization
-    executeAssignment(node->sibling);
+    executeAssignment();
+    currentNode = currentNode->child;
 
-    ASTListNode* conditionNode = node->sibling->sibling;
+    // FOR2 end condition
+    ASTListNode* conditionNode = currentNode;
+    bool condition = evaluateBooleanExpPostfix();
+    //eval ends on last node in expression
+    currentNode = currentNode->child;
+
+    //FOR3
     ASTListNode* incrementNode = conditionNode->sibling;
+    //proceed through to next ast row
+    while (currentNode->sibling) {
+        currentNode = currentNode->sibling;
+    }
+    currentNode = currentNode->child;
 
-    while (isTrue(evaluateExpression(conditionNode->sibling))) {
+    //evaluate endCondition
+    while (condition) {
         executeBlock();
-        executeAssignment(incrementNode->sibling);
+        forEndNode = currentNode;
+        currentNode = incrementNode;
+        executeAssignment();
+        currentNode = conditionNode;
+        condition = evaluateBooleanExpPostfix();
+    }
+
+    //once it fails move to end
+    if (forEndNode) {
+        currentNode = forEndNode;
+    }
+    else {
+        //advance past first bracket
+        currentNode = currentNode->child;
+        bracketCount++;
+
+        while (bracketCount > 0) {
+            if (currentNode->sibling) {
+                currentNode = currentNode->sibling;
+            }
+            else {
+                currentNode = currentNode->child;
+                if (currentNode->type == ASTNodeType::BEGIN_BLOCK) {
+                    bracketCount++;
+                }
+                else if (currentNode->type == ASTNodeType::END_BLOCK) {
+                    bracketCount--;
+                }
+            }
+        }
     }
 }
 
 void Executor::executePrintf() {
     currentNode = currentNode->sibling;
     std::string formatString = currentNode->token->lexeme;
-
-    //advance to first argument
-    currentNode = currentNode->sibling;
     std::vector<Value> args;
 
-    while (currentNode) {
-        args.emplace_back(symbolTable->find(currentNode->token->lexeme)->value);
-        //currentNode = currentNode->sibling;
+    //if there are arguments
+    if (currentNode->sibling) {
+        currentNode = currentNode->sibling;
 
-        if (currentNode->sibling == nullptr) {
-            break;
-        }
-        else {
-            currentNode = currentNode->sibling;
+        while (currentNode) {
+            args.emplace_back(symbolTable->find(currentNode->token->lexeme)->value);
+
+            if (currentNode->sibling == nullptr) {
+                break;
+            }
+            else {
+                currentNode = currentNode->sibling;
+            }
         }
     }
+
 
     int arg_count = 0;
     // For simplicity, assume all arguments are integers
     for (std::string::iterator it = formatString.begin(); it != formatString.end(); it++)
     {
+        if (*it == '\\')
+        {
+            if (*++it ) {
+                std::cout << std::endl;
+                continue;
+            }
+            else {
+                *--it;
+            }
+        }
+
         if (*it != '%')
         {
             putchar(*it);
@@ -216,12 +343,47 @@ Executor::Value Executor::executeFunction() {
     }
 
     return executeReturn();
-
-    //std::cout << "End of execute function." << std::endl;
 }
 
-void Executor::executeProcedure(ASTListNode* node) {
-    // Handle procedures
+void Executor::executeProcedure() {
+    ASTListNode* returnNode;
+    ASTListNode* functionNode = interpreter.getAddressAtInd(symbolTable->find(currentNode->token->lexeme)->address);
+    SymbolTableListNode* curParamNode = functionNode->symbol->parameterList;
+    currentNode = currentNode->sibling;
+
+    // iterate through parameter nodes to assign corresponding values into symbol table
+    while(curParamNode) {
+        curParamNode->value = symbolTable->find(currentNode->token->lexeme, currentNode->symbol->scope)->value;
+        curParamNode = curParamNode->next();
+
+        if (curParamNode) {
+            currentNode = currentNode->sibling;
+        }
+        else {
+            // push returnNode onto stack to reset currentNode once function ends
+            returnNode = currentNode;
+            programCounter.push(returnNode);
+        }
+
+    }
+
+    // currentNode is now pointing at the location of the function so that
+    // other execution functions will be processing inside the function body
+    currentNode = functionNode;
+
+    // loop through function and handle executions
+    while (currentNode->type != ASTNodeType::END_BLOCK) {
+        executeNode(currentNode);
+        if (currentNode->sibling) {
+            currentNode = currentNode->sibling;
+        }
+        else {
+            currentNode = currentNode->child;
+        }
+    }
+
+    currentNode = programCounter.top();
+    programCounter.pop();
 }
 
 void Executor::executeBlock() {
@@ -230,6 +392,7 @@ void Executor::executeBlock() {
     currentNode = currentNode->child->child;
     while (currentNode->type != ASTNodeType::END_BLOCK) {
         executeNode(currentNode);
+        //std::cout << currentNode->lexeme << std::endl;
         if (currentNode->sibling) {
             currentNode = currentNode->sibling;
         }
@@ -472,6 +635,21 @@ bool Executor::evaluateBooleanExpPostfix() {
             auto [lhs, rhs] = getTwoThingsFromStack(stack);
 
             switch (currentNode->token->type) {
+                case TokenType::PLUS:
+                    stack.push(lhs + rhs);
+                    break;
+                case TokenType::MINUS:
+                    stack.push(lhs + rhs);
+                    break;
+                case TokenType::ASTERISK:
+                    stack.push(lhs * rhs);
+                    break;
+                case TokenType::DIVIDE:
+                    stack.push(lhs / rhs);
+                    break;
+                case TokenType::MODULO:
+                    stack.push(lhs % rhs);
+                    break;
                 case TokenType::GT:
                     stack.push(lhs > rhs);
                     break;
