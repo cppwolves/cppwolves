@@ -62,3 +62,7 @@ void Interpreter::advanceAddress() {
 ASTListNode* Interpreter::getAddressAtInd(int index) {
     return _addresses.at(index);
 }
+
+ASTListNode* Interpreter::getMain() {
+    return main;
+}

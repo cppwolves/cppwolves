@@ -15,8 +15,11 @@ public:
     void execute();
 
 private:
+    // same variant type that exists in symbol table
+    using Value = SymbolTableListNode::Value;
+
     // Variant type to store different possible values
-    using Value = std::variant<int, char, bool, std::string>;
+    //using Value = std::variant<int, char, bool, std::string>;
 
     // Helper functions
     void executeNode(ASTListNode* node);
@@ -27,22 +30,22 @@ private:
     Value evaluateLiteral(ASTListNode* node);
 
     // silvia, rename/alter as needed
-    Value evaluateNumExpPostfix(ASTListNode* node);
-    Value evaluateBooleanExpPostfix(ASTListNode* node);
+    Value evaluateNumExpPostfix();
+    bool evaluateBooleanExpPostfix();
     bool isNumber(std::string& str);
     std::pair<int, int> getTwoThingsFromStack(std::stack<int>& stack);
 
     // Execution functions for different AST node types
     void executeDeclaration(ASTListNode* node);
     void executeAssignment(ASTListNode* node);
-    void executeIf(ASTListNode* node);
+    void executeIf();
     void executeWhile(ASTListNode* node);
     void executeFor(ASTListNode* node);
-    void executePrintf(ASTListNode* node);
-    void executeReturn(ASTListNode* node);
-    void executeFunction(ASTListNode* node);
+    void executePrintf();
+    Value executeReturn();
+    Value executeFunction();
     void executeProcedure(ASTListNode* node);
-    void executeBlock(ASTListNode* node);
+    void executeBlock();
 
     // Utility functions
     int getPrecedence(TokenType type);
@@ -63,7 +66,7 @@ private:
     std::vector<std::unordered_map<std::string, Value>> callStack;
 
     // either astnodes or just integers that are used to index the vector of addresses?  I'm not sure
-    std::stack<ASTListNode> programCounter;
+    std::stack<ASTListNode*> programCounter;
 
     // not sure if this should be nodes or the actual values
     std::stack<ASTListNode> expStack;
