@@ -1,6 +1,7 @@
 #include "executor.hpp"
 
 #include <iostream>
+#include <set>
 #include <stack>
 
 
@@ -55,10 +56,8 @@ void Executor::executeNode(ASTListNode* node) {
             executeProcedure();
             break;
         case ASTNodeType::BEGIN_BLOCK:
-            //callStack.emplace_back();
             break;
         case ASTNodeType::END_BLOCK:
-            //callStack.pop_back();
             break;
         default:
             // Handle other node types if necessary
@@ -79,7 +78,8 @@ void Executor::executeAssignment() {
     // save current node to update its value
     ASTListNode* nodeToBeAssigned = currentNode;
     currentNode = currentNode->sibling;
-    nodeToBeAssigned->symbol->value = evaluateNumExpPostfix();
+    //check for assignment type?
+    nodeToBeAssigned->symbol->value = evaluateExpression();
 
     // assume for now that curentNode is at assignment operator after
     // evaluateNumExpPostfix, else we need to move currentNode to last sibling here
@@ -90,8 +90,9 @@ void Executor::executeIf() {
     int bracketCount = 0;
 
     currentNode = currentNode->sibling;
-    bool condition = evaluateBooleanExpPostfix();
+    bool condition = std::get<bool>(evaluateExpression());
     if (condition) {
+        currentNode = currentNode->child->child;
         executeBlock();
 
         if (currentNode->child->type == ASTNodeType::ELSE) {
@@ -127,6 +128,7 @@ void Executor::executeIf() {
         //std::cout << "cond false" << std::endl;
         if (currentNode->child->type == ASTNodeType::ELSE) {
             //std::cout << "else exec" << std::endl;
+            currentNode = currentNode->child->child;
             executeBlock();
             //currentNode = currentNode->child;
         }
@@ -138,13 +140,14 @@ void Executor::executeWhile() {
     currentNode = currentNode->sibling;
     ASTListNode* conditionNode = currentNode;
     ASTListNode* whileEndNode = nullptr;
-    bool condition = evaluateBooleanExpPostfix();
+    bool condition = std::get<bool>(evaluateExpression());
 
     while (condition) {
+        currentNode = currentNode->child->child;
         executeBlock();
         whileEndNode = currentNode;
         currentNode = conditionNode;
-        condition = evaluateBooleanExpPostfix();
+        condition = std::get<bool>(evaluateExpression());
     }
 
     //once it fails move to end
@@ -184,14 +187,16 @@ void Executor::executeFor() {
     currentNode = currentNode->child;
 
     // FOR2 end condition
+    currentNode = currentNode->sibling;
     ASTListNode* conditionNode = currentNode;
-    bool condition = evaluateBooleanExpPostfix();
+    bool condition = std::get<bool>(evaluateExpression());
     //eval ends on last node in expression
     currentNode = currentNode->child;
 
     //FOR3
-    ASTListNode* incrementNode = conditionNode->sibling;
-    //proceed through to next ast row
+    //currentNode = currentNode->sibling;
+    ASTListNode* incrementNode = currentNode;
+    //proceed through to next ast row w/out incrementing
     while (currentNode->sibling) {
         currentNode = currentNode->sibling;
     }
@@ -204,7 +209,7 @@ void Executor::executeFor() {
         currentNode = incrementNode;
         executeAssignment();
         currentNode = conditionNode;
-        condition = evaluateBooleanExpPostfix();
+        condition = std::get<bool>(evaluateExpression());
     }
 
     //once it fails move to end
@@ -254,19 +259,21 @@ void Executor::executePrintf() {
         }
     }
 
-
+    std::string strArg;
+    std::string escape = "\\x0";
+    size_t posOfStringEnd;
     int arg_count = 0;
-    // For simplicity, assume all arguments are integers
+
     for (std::string::iterator it = formatString.begin(); it != formatString.end(); it++)
     {
         if (*it == '\\')
         {
-            if (*++it ) {
+            if (*++it == 'n') {
                 std::cout << std::endl;
                 continue;
             }
             else {
-                *--it;
+                --it;
             }
         }
 
@@ -281,7 +288,14 @@ void Executor::executePrintf() {
                 printf("%d", std::get<int>(args[arg_count]));
                 break;
             case 's':
-                printf("%s", std::get<std::string>(args[arg_count]).c_str());
+                //printf("%s", std::get<std::string>(args[arg_count]).c_str());
+                strArg = std::get<std::string>(args[arg_count]);
+                posOfStringEnd = strArg.find(escape);
+
+                if (posOfStringEnd != std::string::npos) {
+                    strArg = strArg.substr(0, posOfStringEnd);
+                }
+                printf("%s", strArg.c_str());
                 break;
             default:
                 putchar(*it);
@@ -298,7 +312,7 @@ Executor::Value Executor::executeReturn() {
     if (currentNode->sibling) {
         //should call numPostFixExpression
         currentNode = currentNode->sibling;
-        returnValue = evaluateNumExpPostfix();
+        returnValue = evaluateExpression();
     }
 
     //moving currentNode back to caller node position
@@ -315,15 +329,22 @@ Executor::Value Executor::executeFunction() {
     currentNode = currentNode->sibling;
 
 
-    // itterate through parameter nodes to assign corresponding values into symbol table
+    // iterate through parameter nodes to assign corresponding values into symbol table
     while(curParamNode) {
-        curParamNode->value = symbolTable->find(currentNode->token->lexeme, currentNode->symbol->scope)->value;
+        //curParamNode->value = symbolTable->find(currentNode->token->lexeme, currentNode->symbol->scope)->value;
+        curParamNode->value = evaluateExpression();
+        //problem in evalExpression is no stopping after correct # of args
         curParamNode = curParamNode->next();
-        currentNode = currentNode->sibling;
+        //currentNode = currentNode->sibling;
 
-        // push returnNode onto stack to reset currentNode once function ends
-        returnNode = currentNode;
-        programCounter.push(returnNode);
+        if (curParamNode) {
+            currentNode = currentNode->sibling;
+        }
+        else {
+            // push returnNode onto stack to reset currentNode once function ends
+            returnNode = currentNode;
+            programCounter.push(returnNode);
+        }
 
     }
 
@@ -389,7 +410,7 @@ void Executor::executeProcedure() {
 void Executor::executeBlock() {
     //callStack.emplace_back();  // New scope
     //move past begin block
-    currentNode = currentNode->child->child;
+
     while (currentNode->type != ASTNodeType::END_BLOCK) {
         executeNode(currentNode);
         //std::cout << currentNode->lexeme << std::endl;
@@ -403,243 +424,97 @@ void Executor::executeBlock() {
     //callStack.pop_back();  // End scope
 }
 
-Executor::Value Executor::evaluateExpression(ASTListNode* node) {
-    if (!node) return 0;
-
-    if (node->type == ASTNodeType::SIBLING) {
-        return evaluateExpression(node->sibling);
-    }
-
-    if (node->token) {
-        switch (node->token->type) {
-            case TokenType::INTEGER:
-                return std::stoi(node->token->lexeme);
-            case TokenType::IDENTIFIER:
-                return getVariable(node->token->lexeme);
-            case TokenType::PLUS:
-            case TokenType::MINUS:
-            case TokenType::ASTERISK:
-            case TokenType::DIVIDE:
-            case TokenType::MODULO:
-                return evaluateBinaryExpression(node);
-            default:
-                break;
-        }
-    }
-
-    return 0;
-}
-
-Executor::Value Executor::evaluateBinaryExpression(ASTListNode* node) {
-    Value left = evaluateExpression(node->sibling);
-    Value right = evaluateExpression(node->sibling->sibling);
-    return applyOperator(node->token->type, left, right);
-}
-
-Executor::Value Executor::evaluateUnaryExpression(ASTListNode* node) {
-    // Implement unary expression evaluation if necessary
-    return 0;
-}
-
-Executor::Value Executor::evaluateIdentifier(ASTListNode* node) {
-    return getVariable(node->token->lexeme);
-}
-
-Executor::Value Executor::evaluateLiteral(ASTListNode* node) {
-    if (node->token->type == TokenType::STRING) {
-        return node->token->lexeme;
-    } else if (node->token->type == TokenType::INTEGER) {
-        return std::stoi(node->token->lexeme);
-    } else if (node->token->type == TokenType::CHAR_LITERAL) {
-        return node->token->lexeme[0];
-    } else if (node->token->type == TokenType::TRUE) {
-        return true;
-    } else if (node->token->type == TokenType::FALSE) {
-        return false;
-    }
-    return 0;
-}
-
-int Executor::getPrecedence(TokenType type) {
-    // Define operator precedence if necessary
-    return 0;
-}
-
-Executor::Value Executor::applyOperator(TokenType type, const Value& left, const Value& right) {
-    if (std::holds_alternative<int>(left) && std::holds_alternative<int>(right)) {
-        int lhs = std::get<int>(left);
-        int rhs = std::get<int>(right);
-        switch (type) {
-            case TokenType::PLUS:
-                return lhs + rhs;
-            case TokenType::MINUS:
-                return lhs - rhs;
-            case TokenType::ASTERISK:
-                return lhs * rhs;
-            case TokenType::DIVIDE:
-                return lhs / rhs;
-            case TokenType::MODULO:
-                return lhs % rhs;
-            case TokenType::BOOLEAN_EQUAL:
-                return lhs == rhs;
-            case TokenType::BOOLEAN_NOT_EQUAL:
-                return lhs != rhs;
-            case TokenType::LT:
-                return lhs < rhs;
-            case TokenType::GT:
-                return lhs > rhs;
-            case TokenType::LT_EQUAL:
-                return lhs <= rhs;
-            case TokenType::GT_EQUAL:
-                return lhs >= rhs;
-            default:
-                break;
-        }
-    }
-    // Handle other types if necessary
-    return 0;
-}
-
-bool Executor::isTrue(const Value& value) {
-    if (std::holds_alternative<int>(value)) {
-        return std::get<int>(value) != 0;
-    } else if (std::holds_alternative<bool>(value)) {
-        return std::get<bool>(value);
-    }
-    return false;
-}
-
-void Executor::setVariable(const std::string& name, const Value& value) {
-    if (!callStack.empty()) {
-        callStack.back()[name] = value;
-    }
-}
-
-Executor::Value Executor::getVariable(const std::string& name) {
-    for (auto scopeIt = callStack.rbegin(); scopeIt != callStack.rend(); ++scopeIt) {
-        auto varIt = scopeIt->find(name);
-        if (varIt != scopeIt->end()) {
-            return varIt->second;
-        }
-    }
-    // Variable not found; handle error or return default value
-    return 0;
-}
-
-// actual execution of this cant be finished until you guys decide how to handle runtime values
-// note to jacob: varient types seem to add a lot of weird overhead to handle the possibilites correctly
-// i'd reconsider if they're worth it
-Executor::Value Executor::evaluateNumExpPostfix() {
-    std::stack<int> stack;
-
-    // lazy way to hold first val for postfix exp in assignment statements
-    // if assignment operator is never seen, this is irrelevant (in a good way)
-    //auto assignmentTarget = node;
+Executor::Value Executor::evaluateExpression() {
+    std::set<TokenType> doNothingTokens = {TokenType::ASSIGNMENT_OPERATOR, TokenType::DOUBLE_QUOTE, TokenType::SINGLE_QUOTE};
+    std::stack<Value> stack;
 
     while (currentNode) {
-        if (isNumber(currentNode->token->lexeme)) {
+        if (currentNode->token->type == TokenType::STRING) {
+            stack.push(currentNode->token->lexeme);
+        }
+        else if (currentNode->token->type == TokenType::CHAR_LITERAL) {
+            stack.push(currentNode->token->lexeme[0]);
+        }
+        else if (currentNode->token->type == TokenType::INTEGER) {
             stack.push(std::stoi(currentNode->token->lexeme));
-        } else if (currentNode->token->type == TokenType::IDENTIFIER) {
-            int varValue;
+        }
+        else if (currentNode->token->type == TokenType::TRUE) {
+            stack.push(1);
+        }
+        else if (currentNode->token->type == TokenType::FALSE) {
+            stack.push(0);
+        }
+        else if (currentNode->token->type == TokenType::IDENTIFIER) {
+            Value varValue;
 
             // check if identifier is a function call
             // if true, push the function's return value onto the stack as an int
             if (symbolTable->find(currentNode->token->lexeme)->identifierType == TokenType::FUNCTION) {
-                varValue = std::get<int>(executeFunction());
+                varValue = executeFunction();
             }
             else {
-                varValue = std::get<int>(currentNode->symbol->value);
+                varValue = currentNode->symbol->value;
+            }
+            //array access case
+            if (currentNode->sibling) {
+                if (currentNode->sibling->token->type == TokenType::L_BRACKET) {
+                    //std::cout << "found begin of array" << std::endl;
+                    ASTListNode* firstIdentifier = currentNode;
+                    //advance past l_bracket
+                    currentNode = currentNode->sibling->sibling;
+
+                    //eval expr inside brackets
+                    int idxValue = std::get<int>(evaluateExpression());
+                    // stop at r_bracket
+
+                    varValue = std::get<std::string>((firstIdentifier->symbol->value))[idxValue];
+                }
             }
 
             // push identifier's value onto the stack
             stack.push(varValue);
-
-        } else if (currentNode->token->type == TokenType::ASSIGNMENT_OPERATOR) {
-            // assign runtime value of identifier
-            // ex: assignmentTarget->symbol->value = stack.top();
-            // leaves stack empty, which is maybe fine to assume only bc no assignments inside of statements?
-            //stack.pop();
-
-        } else {
-            // is operator
-            auto [lhs, rhs] = getTwoThingsFromStack(stack);
-
-            switch (currentNode->token->type) {
-                case TokenType::PLUS:
-                    stack.push(lhs + rhs);
-                    break;
-                case TokenType::MINUS:
-                    stack.push(lhs + rhs);
-                    break;
-                case TokenType::ASTERISK:
-                    stack.push(lhs * rhs);
-                    break;
-                case TokenType::DIVIDE:
-                    stack.push(lhs / rhs);
-                    break;
-                case TokenType::MODULO:
-                    stack.push(lhs % rhs);
-                    break;
-                default:
-                    break;// err
-            }
         }
+        else if (doNothingTokens.count(currentNode->token->type)) {
 
-        if (currentNode->sibling == nullptr) {
+        }
+        else if (currentNode->token->type == TokenType::R_BRACKET) {
+            //std::cout << "found end of array" << std::endl;
             break;
         }
-        else {
-            currentNode = currentNode->sibling;
-        }
-    }
-
-    int result = stack.top();
-    return result;
-}
-
-// essentially the same as evaluateNumExpPostfix
-// using an int stack bc implicit convertions exists, yay
-bool Executor::evaluateBooleanExpPostfix() {
-    std::stack<int> stack;
-
-    while (currentNode) {
-        if (currentNode->token->type == TokenType::TRUE) {
-            stack.push(1);
-        } else if (currentNode->token->type == TokenType::FALSE) {
-            stack.push(0);
-        } else if (isNumber(currentNode->token->lexeme)) {
-            stack.push(std::stoi(currentNode->token->lexeme));
-        } else if (currentNode->token->type == TokenType::IDENTIFIER) {
-            int varValue;
-
-            // check if identifier is a function call
-            // if true, push the function's return value onto the stack as an int
-            if (symbolTable->find(currentNode->token->lexeme)->identifierType == TokenType::FUNCTION) {
-                varValue = std::get<int>(executeFunction());
-            }
-            else {
-                varValue = std::get<int>(currentNode->symbol->value);
-            }
-
-            // push identifier's value onto the stack
-            stack.push(varValue);
-
-        } else if (currentNode->token->type == TokenType::ASSIGNMENT_OPERATOR) {
-            // assign runtime value of identifier
-            // ex: assignmentTarget->symbol->value = stack.top();
-
-            //stack.pop();
-
-        } else {
+        else if (isOperator(currentNode->token->type)) {
             // is operator
-            auto [lhs, rhs] = getTwoThingsFromStack(stack);
+            auto [lhs_initial, rhs_initial] = getTwoThingsFromStack(stack);
+            int lhs, rhs;
+
+            if (lhs_initial.index() == 0) {
+                lhs = std::get<int>(lhs_initial);
+            }
+            if (lhs_initial.index() == 1) {
+                char lhs_char = std::get<char>(lhs_initial);
+                lhs = lhs_char;
+            }
+            if (lhs_initial.index() == 2) {
+                bool lhs_bool = std::get<bool>(lhs_initial);
+                lhs = lhs_bool;
+            }
+            if (rhs_initial.index() == 0) {
+                rhs = std::get<int>(rhs_initial);
+            }
+            if (lhs_initial.index() == 1) {
+                char rhs_char = std::get<char>(rhs_initial);
+                rhs = rhs_char;
+            }
+            if (rhs_initial.index() == 2) {
+                bool rhs_bool = std::get<bool>(rhs_initial);
+                rhs = rhs_bool;
+            }
 
             switch (currentNode->token->type) {
                 case TokenType::PLUS:
                     stack.push(lhs + rhs);
                     break;
                 case TokenType::MINUS:
-                    stack.push(lhs + rhs);
+                    stack.push(lhs - rhs);
                     break;
                 case TokenType::ASTERISK:
                     stack.push(lhs * rhs);
@@ -687,23 +562,15 @@ bool Executor::evaluateBooleanExpPostfix() {
         }
     }
 
-    bool result = stack.top();
+    Value result = stack.top();
     return result;
 }
 
-bool Executor::isNumber(std::string& str) {
-    try {
-        std::stoi(str);
-        return true;
-    } catch (const std::exception& e) {
-        return false;
-    }
-}
 
-std::pair<int, int> Executor::getTwoThingsFromStack(std::stack<int>& stack) {
-    int rhs = stack.top();
+std::pair<Executor::Value, Executor::Value> Executor::getTwoThingsFromStack(std::stack<Value>& stack) {
+    Value rhs = stack.top();
     stack.pop();
-    int lhs = stack.top();
+    Value lhs = stack.top();
     stack.pop();
     return {lhs, rhs};
 }

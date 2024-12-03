@@ -23,17 +23,8 @@ private:
 
     // Helper functions
     void executeNode(ASTListNode* node);
-    Value evaluateExpression(ASTListNode* node);
-    Value evaluateBinaryExpression(ASTListNode* node);
-    Value evaluateUnaryExpression(ASTListNode* node);
-    Value evaluateIdentifier(ASTListNode* node);
-    Value evaluateLiteral(ASTListNode* node);
-
-    // silvia, rename/alter as needed
-    Value evaluateNumExpPostfix();
-    bool evaluateBooleanExpPostfix();
-    bool isNumber(std::string& str);
-    std::pair<int, int> getTwoThingsFromStack(std::stack<int>& stack);
+    Value evaluateExpression();
+    std::pair<Value, Value> getTwoThingsFromStack(std::stack<Value>& stack);
 
     // Execution functions for different AST node types
     void executeDeclaration(ASTListNode* node);
@@ -48,13 +39,7 @@ private:
     void executeBlock();
 
     // Utility functions
-    int getPrecedence(TokenType type);
-    Value applyOperator(TokenType type, const Value& left, const Value& right);
     bool isTrue(const Value& value);
-
-    // Symbol table handling
-    void setVariable(const std::string& name, const Value& value);
-    Value getVariable(const std::string& name);
 
 private:
     ASTree* ast;
@@ -62,15 +47,11 @@ private:
     ASTListNode* currentNode;
     Interpreter interpreter;
 
-    // Call stack for function calls, mostly ignore this I am playing around with how to use it properly right now. Any suggestions are welcome.
-    std::vector<std::unordered_map<std::string, Value>> callStack;
-
     // either astnodes or just integers that are used to index the vector of addresses?  I'm not sure
     std::stack<ASTListNode*> programCounter;
 
     // not sure if this should be nodes or the actual values
     std::stack<ASTListNode> expStack;
-
 };
 
 #endif // EXECUTOR_HPP
