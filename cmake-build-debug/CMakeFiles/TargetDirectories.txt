@@ -1,3 +1,0 @@
-C:/Users/micha/CLionProjects/CS460_Project6/cmake-build-debug/CMakeFiles/CS460_Project6.dir
-C:/Users/micha/CLionProjects/CS460_Project6/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/Users/micha/CLionProjects/CS460_Project6/cmake-build-debug/CMakeFiles/rebuild_cache.dir

@@ -3,6 +3,7 @@
 /**/*.exe
 /**/.vscode/
 /**/.idea/
+/cmake*
 
 /**/TestFiles/
 /**/files/
