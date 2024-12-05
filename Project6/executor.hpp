@@ -47,10 +47,7 @@ private:
     ASTListNode* currentNode;
     Interpreter interpreter;
 
-    // either astnodes or just integers that are used to index the vector of addresses?  I'm not sure
     std::stack<ASTListNode*> programCounter;
-
-    // not sure if this should be nodes or the actual values
     std::stack<ASTListNode> expStack;
 };
 

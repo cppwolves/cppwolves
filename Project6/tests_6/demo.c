@@ -7,7 +7,7 @@ function int return_math (int n)
   int value;
 
   value = 0;
-  value = n*8;
+  value = n*n;
 
   return value;
 }
@@ -15,12 +15,12 @@ function int return_math (int n)
 procedure main (void)
 {
   int n;
-  int sum;
+  int square;
 
   n = 8;
-  sum = return_math (n);
-  printf ("sum of the squares of the first %d numbers = %d\n", n, sum);
-  printf ("Testing First\n", n, sum);
+  square = return_math (n);
+  printf ("\n%d squared is %d\n\n", n, square);
+  printf ("Testing First\n");
   printf ("Second\n");
-  printf ("Third");
+  printf ("Third\n\n");
 }
